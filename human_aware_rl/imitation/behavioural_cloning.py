@@ -35,6 +35,7 @@ DEFAULT_BC_PARAMS = {
     "mdp_fn_params": {}
 }
 
+
 def init_gym_env(bc_params):
     env_setup_params = copy.deepcopy(bc_params)
     del env_setup_params["data_params"] # Not necessary for setting up env
@@ -46,6 +47,7 @@ def init_gym_env(bc_params):
     gym_env.custom_init(env, featurize_fn=lambda x: mdp.featurize_state(x, mlp))
     return gym_env
 
+
 def train_bc_agent(model_save_dir, bc_params, num_epochs=1000, lr=1e-4, adam_eps=1e-8):
     # Extract necessary expert data and save in right format
     expert_trajs = get_trajs_from_data(**bc_params["data_params"])
@@ -56,6 +58,7 @@ def train_bc_agent(model_save_dir, bc_params, num_epochs=1000, lr=1e-4, adam_eps
     assert dataset is not None
     assert dataset.train_loader is not None
     return bc_from_dataset_and_params(dataset, bc_params, model_save_dir, num_epochs, lr, adam_eps)
+
 
 def bc_from_dataset_and_params(dataset, bc_params, model_save_dir, num_epochs, lr, adam_eps):
     # Setup env
@@ -70,6 +73,7 @@ def bc_from_dataset_and_params(dataset, bc_params, model_save_dir, num_epochs, l
     save_bc_model(model_save_dir, model, bc_params)
     return model
 
+
 def save_bc_model(model_save_dir, model, bc_params):
     print("Saved BC model at", BC_SAVE_DIR + model_save_dir)
     print(model_save_dir)
@@ -80,9 +84,11 @@ def save_bc_model(model_save_dir, model, bc_params):
     }
     save_pickle(bc_metadata, BC_SAVE_DIR + model_save_dir + "bc_metadata")
 
+
 def get_bc_agent_from_saved(model_name, no_waits=False):
     model, bc_params = load_bc_model_from_path(model_name)
     return get_bc_agent_from_model(model, bc_params, no_waits), bc_params
+
 
 def get_bc_agent_from_model(model, bc_params, no_waits=False):
     mdp = OvercookedGridworld.from_layout_name(**bc_params["mdp_params"])
@@ -92,7 +98,8 @@ def get_bc_agent_from_model(model, bc_params, no_waits=False):
         action_probs_n = model.action_probability(observations)
 
         if not include_waits:
-            action_probs = ImitationAgentFromPolicy.remove_indices_and_renormalize(action_probs_n, [Action.ACTION_TO_INDEX[Direction.STAY]])
+            action_probs = ImitationAgentFromPolicy.remove_indices_and_renormalize(
+                action_probs_n, [Action.ACTION_TO_INDEX[Direction.STAY]])
         
         if stochastic:
             return [np.random.choice(len(action_probs[i]), p=action_probs[i]) for i in range(len(action_probs))]
@@ -112,6 +119,7 @@ def get_bc_agent_from_model(model, bc_params, no_waits=False):
 
     return ImitationAgentFromPolicy(state_policy, encoded_state_policy, no_waits=no_waits, mlp=mlp)
 
+
 def eval_with_benchmarking_from_model(n_games, model, bc_params, no_waits, display=False):
     bc_params = copy.deepcopy(bc_params)
     a0 = get_bc_agent_from_model(model, bc_params, no_waits)
@@ -122,9 +130,11 @@ def eval_with_benchmarking_from_model(n_games, model, bc_params, no_waits, displ
     trajectories = a_eval.evaluate_agent_pair(ap, num_games=n_games, display=display)
     return trajectories
 
+
 def eval_with_benchmarking_from_saved(n_games, model_name, no_waits=False, display=False):
     model, bc_params = load_bc_model_from_path(model_name)
     return eval_with_benchmarking_from_model(n_games, model, bc_params, no_waits, display=display)
+
 
 def load_bc_model_from_path(model_name):
     # NOTE: The lowest loss and highest accuracy models 
@@ -134,6 +144,7 @@ def load_bc_model_from_path(model_name):
     bc_params = bc_metadata["bc_params"]
     model = GAIL.load(BC_SAVE_DIR + model_name + "/model")
     return model, bc_params
+
 
 def plot_bc_run(run_info, num_epochs):
     xs = range(0, num_epochs, max(int(num_epochs/10), 1))
@@ -198,7 +209,8 @@ class ImitationAgentFromPolicy(AgentFromPolicy):
             
             # Removing wait action
             if self.no_waits:
-                curr_agent_action_probs = self.remove_indices_and_renormalize(curr_agent_action_probs, [Action.ACTION_TO_INDEX[Direction.STAY]])
+                curr_agent_action_probs = self.remove_indices_and_renormalize(curr_agent_action_probs,
+                                                                              [Action.ACTION_TO_INDEX[Direction.STAY]])
 
             if self.will_unblock_if_stuck:
                 curr_agent_action_probs = self.unblock_if_stuck(curr_agent_state, curr_agent_action_probs)
@@ -236,7 +248,7 @@ class ImitationAgentFromPolicy(AgentFromPolicy):
         last_actions = [s_a[1] for s_a in self.history[self.agent_index][-self.stuck_time:]]
         player_states = [s.players[self.agent_index] for s in last_states]
         pos_and_ors = [p.pos_and_or for p in player_states] + [state.players[self.agent_index].pos_and_or]
-        if self.checkEqual(pos_and_ors):
+        if self.check_equal(pos_and_ors):
             return True, last_actions
         return False, []
 
@@ -254,7 +266,7 @@ class ImitationAgentFromPolicy(AgentFromPolicy):
                 probs[idx] = 0
             return probs / sum(probs)
 
-    def checkEqual(self, iterator):
+    def check_equal(self, iterator):
         first_pos_and_or = iterator[0]
         for curr_pos_and_or in iterator:
             if curr_pos_and_or[0] != first_pos_and_or[0] or curr_pos_and_or[1] != first_pos_and_or[1]:
@@ -280,6 +292,7 @@ def stable_baselines_predict_fn(model, observation):
     action_idx = np.random.choice(len(a_probs), p=a_probs)
     return action_idx
 
+
 def eval_with_standard_baselines(n_games, model_name, display=False):
     """Method to evaluate agent performance with stable-baselines infrastructure,
     just to make sure everything is compatible and integrating correctly."""
@@ -303,6 +316,7 @@ def eval_with_standard_baselines(n_games, model_name, display=False):
 
     print("avg reward", tot_rew / n_games)
     return tot_rew / n_games
+
 
 def symmetric_bc(model_savename, bc_params, num_epochs=1000, lr=1e-4, adam_eps=1e-8):
     """DEPRECATED: Trains two BC models from the same data. Splits data 50-50 and uses each subset as training data for
