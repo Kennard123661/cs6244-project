@@ -44,9 +44,42 @@ def convert_df_to_single_trajectories(df: pd.DataFrame, layouts: list, is_ordere
         human_idx = [get_human_player_idx(df=single_df) if is_human_ai_trajectories else [0, 1]]
 
 
-def convert_joint_trajectories_to_single(single_agent_trajectories, joint_trajectory, joint_metadata, human_idxs,
-                                         is_processed: bool):
-    env = joint_trajectory
+def add_single_trajectories_from_joint(single_agent_trajectories, joint_trajectory, joint_metadata,
+                                       agent_idxs, do_preprocessing: bool):
+    from overcooked_ai_py.planning.planners import MediumLevelPlanner, NO_COUNTERS_PARAMS
+    mdp = joint_metadata['mdp']
+    ml_planner = MediumLevelPlanner.from_pickle_or_compute(mdp=mdp, mlp_params=NO_COUNTERS_PARAMS, force_compute=False)
+
+    assert len(joint_trajectory['eps_observations']) == 1, 'this method takes in one trajectory'
+    states = joint_trajectory['eps_observations'][0]
+    joint_actions = joint_trajectory['eps_actions'][0]
+    rewards = joint_trajectory['eps_rewards'][0]
+    num_steps = joint_trajectory['eps_lengths'][0]
+
+    for agent_idx in agent_idxs:
+        eps_observations, eps_actions, eps_dones = [], [], []
+        for i, state in enumerate(states):
+            action = joint_actions[i][agent_idx]
+
+            if do_preprocessing:
+                action = np.array([Action.ACTION_TO_INDEX[action]]).astype(int)
+
+                state = mdp.featurize_state(state, ml_planner)[agent_idx]
+            eps_observations.append(state)
+            eps_actions.append(action)
+            eps_dones.append(False)
+        assert len(eps_observations) > 0, 'there should be at least one trajectory'
+        eps_dones[-1] = True
+
+        single_agent_trajectories['eps_observations'].append(eps_observations)
+        single_agent_trajectories['eps_actions'].append(eps_actions)
+        single_agent_trajectories['eps_dones'].append(eps_dones)
+        single_agent_trajectories['eps_rewards'].append(rewards)
+        single_agent_trajectories['eps_returns'].append(sum(rewards))
+        single_agent_trajectories['eps_lengths'].append(num_steps)
+        single_agent_trajectories['eps_agent_idxs'].append(agent_idx)
+        single_agent_trajectories['mdp_params'].append(mdp.mdp_params)
+        single_agent_trajectories['env_params'].append({})
 
 
 def get_human_player_idx(df: pd.DataFrame):
@@ -55,8 +88,23 @@ def get_human_player_idx(df: pd.DataFrame):
     assert len(one_traj_df['player_1_id'].unique()) == 1
 
 
-def parse_state(state: str) -> dict:
+def parse_object(mdp, object_df: pd.DataFrame):
+    obj_pos = tuple(object_df['position'])
+
+
+def parse_state(mdp, state: str) -> dict:
     state = literal_eval(state)
+
+    player_0, player_1 = state['players']
+
+    position0 = tuple(player_0['position']),
+    orientation0 = tuple(player_0['orientation'])
+    position1 = tuple(player_1['position']),
+    orientation1 = tuple(player_1['orientation'])
+
+    if 'held_object' in player_0.keys():
+
+
     return state
 
 
@@ -80,7 +128,7 @@ def convert_df_to_joint_trajectory(df: pd.DataFrame, check_complete_trajectory: 
     data_point = df.iloc[0]
     layout = data_point['layout_name']
 
-    evaluator = AgentEvaluator.from_layout_name(
+    evaluator = AgentEvaluator(
         mdp_params={'layout_name': layout},
         env_params={'horizon': 1250}
     )
@@ -119,7 +167,6 @@ def convert_df_to_joint_trajectory(df: pd.DataFrame, check_complete_trajectory: 
         'mdp': evaluator.env.mdp
     }
     return trajectories, metadata
-
 
 
 def get_worker_layout_data(all_df: pd.DataFrame, worker_id: int, layout: str):
