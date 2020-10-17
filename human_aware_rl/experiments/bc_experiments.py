@@ -1,6 +1,11 @@
 import copy
 import numpy as np
 import os
+import sys
+
+ROOT_DIR = os.path.join(os.path.dirname(__file__), '..', '..')
+OVERCOOKED_DIR = os.path.join(ROOT_DIR, 'overcooked_ai')
+sys.path.insert(0, OVERCOOKED_DIR)
 
 from overcooked_ai_py.utils import save_pickle, mean_and_std_err
 from overcooked_ai_py.agents.benchmarking import AgentEvaluator
