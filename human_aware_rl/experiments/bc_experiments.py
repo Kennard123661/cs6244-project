@@ -3,7 +3,7 @@ import numpy as np
 import os
 import sys
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), '..', '..')
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OVERCOOKED_DIR = os.path.join(ROOT_DIR, 'overcooked_ai')
 sys.path.insert(0, OVERCOOKED_DIR)
 
