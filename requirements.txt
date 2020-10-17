@@ -2,4 +2,4 @@ torch==1.4
 torchvision
 numpy
 stable-baselines3
-
+pandas
