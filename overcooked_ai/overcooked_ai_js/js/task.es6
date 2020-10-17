@@ -20,13 +20,14 @@ export class OvercookedGame {
         show_post_cook_time = false,
 
         COOK_TIME = 2,
+        explosion_time = Number.MAX_SAFE_INTEGER,
         DELIVERY_REWARD = OvercookedMDP.OvercookedGridworld.DELIVERY_REWARD,
-        num_items_for_soup = 3
+        always_serve = false
     }){
         this.gameWidth = gameWidth;
         this.gameHeight = gameHeight;
         this.container_id = container_id;
-        let params = {COOK_TIME, DELIVERY_REWARD, num_items_for_soup};
+        let params = {COOK_TIME, explosion_time, DELIVERY_REWARD, always_serve};
         this.mdp = OvercookedMDP.OvercookedGridworld.from_grid(start_grid, params);
         this.state = this.mdp.get_start_state();
         this.joint_action = [OvercookedMDP.Direction.STAY, OvercookedMDP.Direction.STAY];
@@ -175,9 +176,12 @@ export class OvercookedGame {
                         [souptype, n_ingredients, cooktime] = obj.state;
 
                         // select pot sprite
-                        if (cooktime < this.mdp.COOK_TIME) {
+                        if (cooktime <= this.mdp.COOK_TIME) {
                             spriteframe =
                                 `soup-${souptype}-${n_ingredients}-cooking.png`;
+                        }
+                        else if (cooktime >= this.mdp.explosion_time) {
+                            spriteframe = 'pot-explosion.png';
                         }
                         else {
                             spriteframe = `soup-${souptype}-cooked.png`;
@@ -253,23 +257,20 @@ export class OvercookedGame {
                 }
 
                 //draw order list
-                if (state.order_list !== null) {
-                    let order_list = "Orders: "+state.order_list.join(", ");
-                    if (typeof(sprites['order_list']) !== 'undefined') {
-                        sprites['order_list'].setText(order_list);
-                    }
-                    else {
-                        sprites['order_list'] = this.add.text(
-                            5, 45, order_list,
-                            {
-                                font: "20px Arial",
-                                fill: "yellow",
-                                align: "left"
-                            }
-                        )
-                    }
+                let order_list = "Orders: "+state.order_list.join(", ");
+                if (typeof(sprites['order_list']) !== 'undefined') {
+                    sprites['order_list'].setText(order_list);
                 }
-                
+                else {
+                    sprites['order_list'] = this.add.text(
+                        5, 5, order_list,
+                        {
+                            font: "20px Arial",
+                            fill: "yellow",
+                            align: "left"
+                        }
+                    )
+                }
             },
             _drawScore: function(score, sprites) {
                 score = "Score: "+score;
@@ -294,7 +295,7 @@ export class OvercookedGame {
                 }
                 else {
                     sprites['time_left'] = this.add.text(
-                        5, 5, time_left,
+                        5, 45, time_left,
                         {
                             font: "20px Arial",
                             fill: "yellow",

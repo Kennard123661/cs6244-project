@@ -1,5 +1,4 @@
-import itertools, copy
-import numpy as np
+import itertools
 
 
 class Direction(object):
@@ -48,9 +47,8 @@ class Action(object):
         Direction.EAST: "→",
         Direction.WEST: "←",
         STAY: "stay",
-        INTERACT: INTERACT
+        INTERACT: "interact"
     }
-    NUM_ACTIONS = len(ALL_ACTIONS)
 
     @staticmethod
     def move_in_direction(point, direction):
@@ -77,30 +75,6 @@ class Action(object):
         return direction
 
     @staticmethod
-    def sample(action_probs):
-        return np.random.choice(Action.ALL_ACTIONS, p=action_probs)
-    
-    @staticmethod
-    def argmax(action_probs):
-        action_idx = np.argmax(action_probs)
-        return Action.INDEX_TO_ACTION[action_idx]
-
-    @staticmethod
-    def remove_indices_and_renormalize(probs, indices, eps=0.0):
-        probs = copy.deepcopy(probs)
-        if len(np.array(probs).shape) > 1:
-            probs = np.array(probs)
-            for row_idx, row in enumerate(indices):
-                for idx in indices:
-                    probs[row_idx][idx] = eps
-            norm_probs =  probs.T / np.sum(probs, axis=1)
-            return norm_probs.T
-        else:
-            for idx in indices:
-                probs[idx] = eps
-            return probs / sum(probs)
-
-    @staticmethod
     def to_char(action):
         assert action in Action.ALL_ACTIONS
         return Action.ACTION_TO_CHAR[action]
@@ -109,8 +83,3 @@ class Action(object):
     def joint_action_to_char(joint_action):
         assert all([a in Action.ALL_ACTIONS for a in joint_action])
         return tuple(Action.to_char(a) for a in joint_action)
-
-    @staticmethod
-    def uniform_probs_over_actions():
-        num_acts = len(Action.ALL_ACTIONS)
-        return np.ones(num_acts) / num_acts

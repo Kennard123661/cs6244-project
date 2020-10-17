@@ -93,12 +93,14 @@ def extract_df_for_worker_on_layout(main_trials, worker_id, layout_name):
     worker_layout_traj_df = worker_trajs_df[worker_trajs_df['layout_name'] == layout_name]
     return worker_layout_traj_df
 
+
 def df_traj_to_python_joint_traj(traj_df, complete_traj=True):
     if len(traj_df) == 0:
         return None
 
     datapoint = traj_df.iloc[0]
     python_layout_name = JS_LAYOUT_NAME_TO_PYTHON_NAME[datapoint['layout_name']]
+    # python_layout_name = datapoint['layout_name']
     agent_evaluator = AgentEvaluator(
         mdp_params={"layout_name": python_layout_name}, 
         env_params={"horizon": 1250}
@@ -147,13 +149,13 @@ def convert_joint_df_trajs_to_overcooked_single(main_trials, worker_ids, layout_
         # With shape (n_timesteps, game_len), where game_len might vary across games:
         "ep_observations": [],
         "ep_actions": [],
-        "ep_rewards": [], # Individual reward values
-        "ep_dones": [], # Individual done values,
+        "ep_rewards": [],  # Individual reward values
+        "ep_dones": [],  # Individual done values,
 
         # With shape (n_episodes, ):
-        "ep_returns": [], # Sum of rewards across each episode
-        "ep_lengths": [], # Lengths of each episode
-        "ep_agent_idxs": [], # Agent index for current episode
+        "ep_returns": [],  # Sum of rewards across each episode
+        "ep_lengths": [],  # Lengths of each episode
+        "ep_agent_idxs": [],  # Agent index for current episode
         "mdp_params": [],
         "env_params": []
     }
@@ -176,10 +178,12 @@ def convert_joint_df_trajs_to_overcooked_single(main_trials, worker_ids, layout_
 
     return single_agent_trajectories
 
+
 def get_human_player_index_for_df(one_traj_df):
     """Determines which player index had a human player"""
     assert len(one_traj_df['workerid_num'].unique()) == 1
     return (one_traj_df.groupby('workerid_num')['player_index'].sum() > 0).iloc[0]
+
 
 def joint_state_trajectory_to_single(trajectories, joint_traj_data, traj_metadata, player_indices_to_convert=None, processed=True):
     """
