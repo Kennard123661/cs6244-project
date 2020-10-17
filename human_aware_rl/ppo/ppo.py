@@ -7,22 +7,23 @@ from memory_profiler import profile
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 from tensorflow.saved_model import simple_save
+from human_aware_rl.directory import CHECKPOINT_DIR
 
-PPO_DATA_DIR = 'data/ppo_runs/'
+PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ppo_runs' + os.path.sep)
+# PPO_DATA_DIR = 'data/ppo_runs/'
 
 ex = Experiment('PPO')
 ex.observers.append(FileStorageObserver.create(PPO_DATA_DIR + 'ppo_exp'))
 
-from overcooked_ai_py.utils import load_pickle, save_pickle, load_dict_from_file, profile
+from overcooked_ai_py.utils import load_pickle, save_pickle
 from overcooked_ai_py.agents.agent import RandomAgent, GreedyHumanModel, AgentPair
-from overcooked_ai_py.agents.benchmarking import AgentEvaluator
 from overcooked_ai_py.planning.planners import NO_COUNTERS_PARAMS, MediumLevelPlanner
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 
-from human_aware_rl.baselines_utils import get_vectorized_gym_env, create_model, update_model, save_baselines_model, load_baselines_model, get_agent_from_saved_model
+from human_aware_rl.baselines_utils import get_vectorized_gym_env, create_model, update_model, get_agent_from_saved_model
 from human_aware_rl.utils import create_dir_if_not_exists, reset_tf, delete_dir_if_exists, set_global_seed
-from human_aware_rl.imitation.behavioural_cloning import get_bc_agent_from_saved, DEFAULT_ENV_PARAMS, BC_SAVE_DIR
+from human_aware_rl.imitation.behavioural_cloning import get_bc_agent_from_saved
 from human_aware_rl.experiments.bc_experiments import BEST_BC_MODELS_PATH
 
 
@@ -219,6 +220,7 @@ def my_config():
         "grad_updates_per_agent": GRAD_UPDATES_PER_AGENT
     }
 
+
 def save_ppo_model(model, save_folder):
     delete_dir_if_exists(save_folder, verbose=True)
     simple_save(
@@ -232,10 +234,12 @@ def save_ppo_model(model, save_folder):
         }
     )
 
+
 def configure_other_agent(params, gym_env, mlp, mdp):
     if params["OTHER_AGENT_TYPE"] == "hm":
         hl_br, hl_temp, ll_br, ll_temp = params["HM_PARAMS"]
-        agent = GreedyHumanModel(mlp, hl_boltzmann_rational=hl_br, hl_temp=hl_temp, ll_boltzmann_rational=ll_br, ll_temp=ll_temp)
+        agent = GreedyHumanModel(mlp, hl_boltzmann_rational=hl_br, hl_temp=hl_temp, ll_boltzmann_rational=ll_br,
+                                 ll_temp=ll_temp)
         gym_env.use_action_method = True
 
     elif params["OTHER_AGENT_TYPE"][:2] == "bc":
@@ -270,6 +274,7 @@ def configure_other_agent(params, gym_env, mlp, mdp):
         agent.set_mdp(mdp)
         gym_env.other_agent = agent
 
+
 def load_training_data(run_name, seeds=None):
     run_dir = PPO_DATA_DIR + run_name + "/"
     config = load_pickle(run_dir + "config")
@@ -288,6 +293,7 @@ def load_training_data(run_name, seeds=None):
 
     return train_infos, config
 
+
 def get_ppo_agent(save_dir, seed=0, best=False):
     save_dir = PPO_DATA_DIR + save_dir + '/seed{}'.format(seed)
     config = load_pickle(save_dir + '/config')
@@ -297,6 +303,7 @@ def get_ppo_agent(save_dir, seed=0, best=False):
         agent = get_agent_from_saved_model(save_dir + "/ppo_agent", config["sim_threads"])
     return agent, config
 
+
 def match_ppo_with_other_agent(save_dir, other_agent, n=1, display=False):
     agent, agent_eval = get_ppo_agent(save_dir)
     ap0 = AgentPair(agent, other_agent)
@@ -305,6 +312,7 @@ def match_ppo_with_other_agent(save_dir, other_agent, n=1, display=False):
     # Sketch switch
     ap1 = AgentPair(other_agent, agent)
     agent_eval.evaluate_agent_pair(ap1, display=display, num_games=n)
+
 
 def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None, single=False):
     from collections import defaultdict
@@ -333,6 +341,7 @@ def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None,
     
     if single:
         plt.legend()
+
 
 @ex.automain
 # @profile

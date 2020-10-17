@@ -41,6 +41,7 @@ def train_bc_models(all_params, seeds):
             plot_bc_run(model.bc_info, params['num_epochs'])
             reset_tf()
 
+
 def evaluate_all_bc_models(all_params, num_rounds, num_seeds):
     """Evaluate all trained models"""
     bc_models_evaluation = {}
@@ -48,7 +49,7 @@ def evaluate_all_bc_models(all_params, num_rounds, num_seeds):
         layout_name = params["layout_name"]
         
         print(layout_name)
-        bc_models_evaluation[layout_name] = { "train": {}, "test": {} }
+        bc_models_evaluation[layout_name] = {"train": {}, "test": {}}
 
         for seed_idx in range(num_seeds):
             eval_trajs = eval_with_benchmarking_from_saved(num_rounds, layout_name + "_bc_train_seed{}".format(seed_idx))
@@ -58,6 +59,7 @@ def evaluate_all_bc_models(all_params, num_rounds, num_seeds):
             bc_models_evaluation[layout_name]["test"][seed_idx] = np.mean(eval_trajs['ep_returns'])
 
     return bc_models_evaluation
+
 
 def evaluate_bc_models(bc_model_paths, num_rounds):
     """
@@ -90,6 +92,7 @@ def evaluate_bc_models(bc_model_paths, num_rounds):
         best_bc_models_performance[layout_name]["BC_train+BC_test_1"] = mean_and_std_err(test_and_train['ep_returns'])
     
     return best_bc_models_performance
+
 
 def run_all_bc_experiments():
     # Train BC models

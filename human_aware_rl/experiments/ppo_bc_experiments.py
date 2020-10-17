@@ -25,6 +25,7 @@ def plot_runs_training_curves(ppo_bc_model_paths, seeds, single=False, show=Fals
             if save: plt.savefig("rew_ppo_bc_{}_{}".format(run_type, layout), bbox_inches='tight')
             if show: plt.show()
 
+
 def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, ppo_bc_model_paths, seeds, best=False, display=False):
     assert len(seeds["bc_train"]) == len(seeds["bc_test"])
     ppo_bc_performance = defaultdict(lambda: defaultdict(list))
@@ -66,6 +67,7 @@ def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, pp
     
     return ppo_bc_performance
 
+
 def evaluate_all_ppo_bc_models(ppo_bc_model_paths, best_bc_model_paths, num_rounds, seeds, best):
     layouts = list(ppo_bc_model_paths['bc_train'].keys())
     ppo_bc_performance = {}
@@ -74,6 +76,7 @@ def evaluate_all_ppo_bc_models(ppo_bc_model_paths, best_bc_model_paths, num_roun
         layout_eval = evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, best_bc_model_paths, ppo_bc_model_paths, seeds=seeds, best=best)
         ppo_bc_performance.update(dict(layout_eval))
     return ppo_bc_performance
+
 
 def run_all_ppo_bc_experiments(best_bc_model_paths):
     reset_tf()

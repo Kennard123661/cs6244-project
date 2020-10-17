@@ -7,11 +7,13 @@ import tensorflow.contrib.layers as layers
 
 mapping = {}
 
+
 def register(name):
     def _thunk(func):
         mapping[name] = func
         return func
     return _thunk
+
 
 def nature_cnn(unscaled_images, **conv_kwargs):
     """
@@ -197,6 +199,7 @@ def conv_only(convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)], **conv_kwargs):
         return out
     return network_fn
 
+
 def _normalize_clip_observation(x, clip_range=[-5.0, 5.0]):
     rms = RunningMeanStd(shape=x.shape[1:])
     norm_x = tf.clip_by_value((x - rms.mean) / rms.std, min(clip_range), max(clip_range))
@@ -216,9 +219,12 @@ def get_network_builder(name):
         return network_fn
 
     """
+    print(mapping)
     if callable(name):
+        print('here2')
         return name
     elif name in mapping:
+        print('here')
         return mapping[name]
     else:
         raise ValueError('Unknown network type: {}'.format(name))

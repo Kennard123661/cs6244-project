@@ -33,6 +33,7 @@ def get_trajs_from_data(data_path, train_mdps, ordered_trajs, human_ai_trajs):
     
     return trajs
 
+
 def get_overcooked_traj_for_worker_layout(main_trials, worker_id, layout_name, complete_traj=True):
     """
     Extract trajectory for specific worker-layout pair and then return trajectory data 
@@ -46,18 +47,19 @@ def get_overcooked_traj_for_worker_layout(main_trials, worker_id, layout_name, c
 
     return trajectory, metadata
 
+
 def save_npz_file(trajs, output_filename):
     AgentEvaluator.save_traj_in_stable_baselines_format(trajs, output_filename)
 
 
 ############################
-## TRAJ DISPLAY FUNCTIONS ##
+# TRAJ DISPLAY FUNCTIONS #
 ############################
-
 def interactive_from_traj_df(df_traj):
     python_traj, _ = df_traj_to_python_joint_traj(df_traj)
     AgentEvaluator.interactive_from_traj(python_traj, traj_idx=0)
-    
+
+
 def display_interactive_by_workerid(main_trials, worker_id, limit=None):
     print("Displaying main trials for worker", worker_id)
     worker_trials = main_trials[main_trials['workerid_num'] == worker_id]
@@ -67,7 +69,8 @@ def display_interactive_by_workerid(main_trials, worker_id, limit=None):
         count += 1
         if limit is not None and count >= limit:
             return
-        
+
+
 def display_interactive_by_layout(main_trials, layout_name, limit=None):
     print("Displaying main trials for layout", layout_name)
     layout_trials = main_trials[main_trials['layout_name'] == layout_name]
@@ -101,6 +104,7 @@ def remove_rounds_with_low_rewards(trials, min_rew_fn, clip_400):
 
     return pd.concat(cleaned_layout_dfs)
 
+
 def get_trials_scenario_and_worker_rews(trials):
     scenario_rews = defaultdict(list)
     worker_rews = defaultdict(list)
@@ -110,6 +114,7 @@ def get_trials_scenario_and_worker_rews(trials):
             scenario_rews[layout_name].append(tot_rew)
             worker_rews[wid].append(tot_rew)
     return dict(scenario_rews), dict(worker_rews)
+
 
 def get_dict_stats(d):
     new_d = d.copy()
@@ -121,6 +126,7 @@ def get_dict_stats(d):
             'n': len(v)
         }
     return new_d
+
 
 def train_test_split(trials, print_stats=False):
     cleaned_trials_dict = defaultdict(dict)
@@ -155,8 +161,10 @@ def train_test_split(trials, print_stats=False):
         cleaned_trials_dict[layout]["test"] = layout_test
     return cleaned_trials_dict
 
+
 def remove_worker(trials, workerid_num):
     return trials[trials["workerid_num"] != workerid_num]
+
 
 def remove_worker_on_map(trials, workerid_num, layout):
     to_remove = (trials['workerid_num'] == workerid_num) & (trials['layout_name'] == layout)
@@ -165,8 +173,7 @@ def remove_worker_on_map(trials, workerid_num, layout):
     return trials[to_keep]
 
 
-## Human-human dataframe processing functions
-
+# Human-human dataframe processing functions
 def format_hh_trials_df(trials, clip_400):
     """Get trials for layouts in standard format for data exploration, with right reward and length information"""
     layouts = np.unique(trials['layout_name'])
@@ -185,8 +192,8 @@ def format_hh_trials_df(trials, clip_400):
 
     # Calculate total reward for each round
     main_trials = main_trials.join(main_trials.groupby(['workerid_num', 'round_num', 'layout_name'])['reward_norm'].sum(), on=['workerid_num', 'round_num', 'layout_name'], rsuffix='_total')
-
     return main_trials
+
 
 def min_hh_rew_per_scenario(layout, clip_400):
     if layout == "cramped_room":
@@ -202,11 +209,10 @@ def min_hh_rew_per_scenario(layout, clip_400):
         
     if clip_400:
         min_rew /= 3
-
     return min_rew
 
-## Human-AI dataframe data processing functions
 
+# Human-AI dataframe data processing functions
 def trial_type_by_unique_id_dict(trial_questions_df):
     trial_type_dict = {}
     unique_ids = trial_questions_df['workerid'].unique()
@@ -215,6 +221,7 @@ def trial_type_by_unique_id_dict(trial_questions_df):
         model_type, player_index = person_data['MODEL_TYPE'].iloc[0], int(person_data['PLAYER_INDEX'].iloc[0])
         trial_type_dict[unique_id] = (model_type, player_index)
     return trial_type_dict
+
 
 def format_hai_trials_df(full_hai_trials, trial_type_dict):
     d = []
@@ -231,14 +238,20 @@ def format_hai_trials_df(full_hai_trials, trial_type_dict):
     main_trials['reward_norm'] = np.where(main_trials['reward'] != 0.0, 20.0, 0.0)
     
     # Add game length for each round
-    main_trials = main_trials.join(main_trials.groupby(['participant_id', 'round_num', 'layout_name'])['cur_gameloop'].count(), on=['participant_id', 'round_num', 'layout_name'], rsuffix='_total')
+    main_trials = main_trials.join(main_trials.groupby(
+        ['participant_id', 'round_num', 'layout_name'])['cur_gameloop'].count(),
+                                   on=['participant_id', 'round_num', 'layout_name'], rsuffix='_total')
     
     # Calculate total reward for each round
-    main_trials = main_trials.join(main_trials.groupby(['participant_id', 'round_num', 'layout_name'])['reward_norm'].sum(), on=['participant_id', 'round_num', 'layout_name'], rsuffix='_total')
+    main_trials = main_trials.join(main_trials.groupby(
+        ['participant_id', 'round_num', 'layout_name'])['reward_norm'].sum(),
+                                   on=['participant_id', 'round_num', 'layout_name'], rsuffix='_total')
     return main_trials
+
 
 def is_human_idx_1(trial_df, workerid_num):
     return (trial_df.groupby('workerid_num')['player_index'].sum() > 0)[workerid_num]
+
 
 def add_means_and_stds_from_df(data, main_trials, algo_name):
     """Calculate means and SEs for each layout, and add them to the data dictionary under algo name `algo`"""
@@ -256,7 +269,9 @@ def add_means_and_stds_from_df(data, main_trials, algo_name):
                 idx_0_workers.append(worker_id)
     
         idx_0_trials = layout_trials[layout_trials['workerid_num'].isin(idx_0_workers)]
-        data[layout][algo_name + "_0"] = mean_and_std_err(idx_0_trials.groupby('workerid_num')['reward_norm_total'].mean())
+        data[layout][algo_name + "_0"] = mean_and_std_err(
+            idx_0_trials.groupby('workerid_num')['reward_norm_total'].mean())
         
         idx_1_trials = layout_trials[layout_trials['workerid_num'].isin(idx_1_workers)]
-        data[layout][algo_name + "_1"] = mean_and_std_err(idx_1_trials.groupby('workerid_num')['reward_norm_total'].mean())
+        data[layout][algo_name + "_1"] = mean_and_std_err(
+            idx_1_trials.groupby('workerid_num')['reward_norm_total'].mean())

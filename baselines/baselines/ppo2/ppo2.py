@@ -93,7 +93,7 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
     total_timesteps = int(total_timesteps)
 
     policy = build_policy(env, network, **network_kwargs)
-    
+
     bestrew = 0
     # Get the nb of env
     nenvs = env.num_envs
@@ -169,7 +169,7 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
 
         # Here what we're going to do is for each minibatch calculate the loss and append it.
         mblossvals = []
-        if states is None: # nonrecurrent version
+        if states is None:  # nonrecurrent version
             # Index of each element of batch_size
             # Create the indices array
             inds = np.arange(nbatch)

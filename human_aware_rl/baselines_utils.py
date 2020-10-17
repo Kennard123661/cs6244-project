@@ -70,6 +70,7 @@ class RewardShapingEnv(VecEnvWrapper):
         """Takes in what fraction of the run we are at, and determines the reward shaping coefficient"""
         self.reward_shaping_factor = reward_shaping_factor
 
+
 class LinearAnnealer():
     """Anneals a parameter from 1 to 0 over the course of training,
     over a specified horizon."""
@@ -84,6 +85,7 @@ class LinearAnnealer():
         assert 0 <= curr_value <= 1
         return curr_value
 
+
 class DummyEnv(object):
     """
     Class used to save number of envs, observation space and action 
@@ -97,10 +99,10 @@ class DummyEnv(object):
     def reset(self):
         pass
 
+
 ########################
 # UTILS AND HELPER FNS #
 ########################
-
 @register("conv_and_mlp")
 def conv_network_fn(**kwargs):
     """Used to register custom network type used by Baselines for Overcooked"""
@@ -152,6 +154,7 @@ def conv_network_fn(**kwargs):
         return out
     return network_fn
 
+
 def get_vectorized_gym_env(base_env, gym_env_name, featurize_fn=None, **kwargs):
     """
     Create a one-player overcooked gym environment in which the other player is fixed (embedded in the environment)
@@ -171,6 +174,7 @@ def get_vectorized_gym_env(base_env, gym_env_name, featurize_fn=None, **kwargs):
     vectorized_gym_env = RewardShapingEnv(SubprocVecEnv([gym_env_fn] * kwargs["sim_threads"]))
     return vectorized_gym_env
 
+
 def get_pbt_agent_from_config(save_dir, sim_threads, seed, agent_idx=0, best=False):
     agent_folder = save_dir + 'seed_{}/agent{}'.format(seed, agent_idx)
     if best:
@@ -180,16 +184,19 @@ def get_pbt_agent_from_config(save_dir, sim_threads, seed, agent_idx=0, best=Fal
     agent = get_agent_from_saved_model(agent_to_load_path, sim_threads)
     return agent
 
+
 def get_agent_from_saved_model(save_dir, sim_threads):
     """Get Agent corresponding to a saved model"""
     # NOTE: Could remove dependency on sim_threads if get the sim_threads from config or dummy env
     state_policy, processed_obs_policy = get_model_policy_from_saved_model(save_dir, sim_threads)
     return AgentFromPolicy(state_policy, processed_obs_policy)
 
+
 def get_agent_from_model(model, sim_threads, is_joint_action=False):
     """Get Agent corresponding to a loaded model"""
     state_policy, processed_obs_policy = get_model_policy_from_model(model, sim_threads, is_joint_action=is_joint_action)
     return AgentFromPolicy(state_policy, processed_obs_policy)
+
 
 def get_model_policy_from_saved_model(save_dir, sim_threads):
     """Get a policy function from a saved model"""
@@ -197,11 +204,13 @@ def get_model_policy_from_saved_model(save_dir, sim_threads):
     step_fn = lambda obs: predictor({"obs": obs})["action_probs"]
     return get_model_policy(step_fn, sim_threads)
 
+
 def get_model_policy_from_model(model, sim_threads, is_joint_action=False):
     def step_fn(obs):
         action_probs = model.act_model.step(obs, return_action_probs=True)
         return action_probs
     return get_model_policy(step_fn, sim_threads, is_joint_action=is_joint_action)
+
 
 def get_model_policy(step_fn, sim_threads, is_joint_action=False):
     """
@@ -248,6 +257,7 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
 
     return state_policy, encoded_state_policy
 
+
 def create_model(env, agent_name, use_pretrained_weights=False, **kwargs):
     """Creates a model and saves it at a location
     
@@ -269,6 +279,7 @@ def create_model(env, agent_name, use_pretrained_weights=False, **kwargs):
     model.dummy_env = env
     return model
 
+
 def save_baselines_model(model, save_dir):
     """
     Saves Model (from baselines) into `path/model` file, 
@@ -289,6 +300,7 @@ def save_baselines_model(model, save_dir):
     )
     save_pickle(dummy_env, save_dir + "/dummy_env")
 
+
 def load_baselines_model(save_dir, agent_name, config):
     """
     NOTE: Before using load it might be necessary to clear the tensorflow graph
@@ -305,6 +317,7 @@ def load_baselines_model(save_dir, agent_name, config):
     )
     model.dummy_env = dummy_env
     return model
+
 
 def update_model(env, model, **kwargs):
     """
@@ -338,10 +351,12 @@ def update_model(env, model, **kwargs):
     )
     return run_info
 
+
 def overwrite_model(model_from, model_to):
     model_from_vars = tf.trainable_variables(model_from.scope)
     model_to_vars = tf.trainable_variables(model_to.scope)
     overwrite_variables(model_from_vars, model_to_vars)
+
 
 def overwrite_variables(variables_to_copy, variables_to_overwrite):
     sess = tf.get_default_session()
@@ -365,6 +380,7 @@ def get_model_value_fn(model, sim_threads, debug=False):
         a, v, state, neglogp = model.act_model.step(padded_obs)
         return v[0]
     return value_fn
+
 
 def get_model_value_fn_policy(model, sim_threads, boltzmann_rationality=1):
     """Returns a policy based on the value function approximation of the model"""
@@ -396,6 +412,7 @@ def get_model_value_fn_policy(model, sim_threads, boltzmann_rationality=1):
         return Action.INDEX_TO_ACTION[sampled_action_idx]
 
     return v_policy
+
 
 def get_boltzmann_rational_agent_from_model(model, sim_threads, boltzmann_rationality):
     p = get_model_value_fn_policy(model, sim_threads, boltzmann_rationality=boltzmann_rationality)
