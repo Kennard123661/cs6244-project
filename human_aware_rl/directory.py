@@ -7,3 +7,4 @@ if node == 'kennardng-desktop':
 else:
     raise NotImplementedError
 DATA_DIR = os.path.join(PROJECT_DIR, 'human_aware_rl', 'data')
+CHECKPOINT_DIR = os.path.join(PROJECT_DIR, 'checkpoints')

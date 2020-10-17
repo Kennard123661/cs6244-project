@@ -1,4 +1,5 @@
 import gym
+import os
 import tqdm, copy
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,8 +17,9 @@ from overcooked_ai_py.utils import save_pickle, load_pickle
 
 from human_aware_rl.baselines_utils import create_dir_if_not_exists
 from human_aware_rl.human.process_dataframes import save_npz_file, get_trajs_from_data
+from human_aware_rl.directory import CHECKPOINT_DIR
 
-BC_SAVE_DIR = "data/bc_runs/"
+BC_SAVE_DIR = os.path.join(CHECKPOINT_DIR, 'bc_runs' + os.path.sep)
 
 DEFAULT_DATA_PARAMS = {
     "train_mdps": ["simple"],
