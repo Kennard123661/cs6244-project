@@ -1,9 +1,8 @@
-import time, gym, copy, seaborn
+import seaborn
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from overcooked_ai_py.utils import save_pickle, load_pickle, load_dict_from_txt
+from overcooked_ai_py.utils import save_pickle, load_dict_from_txt
 from overcooked_ai_py.agents.agent import AgentPair
 from overcooked_ai_py.agents.benchmarking import AgentEvaluator
 
@@ -14,7 +13,6 @@ from human_aware_rl.pbt.pbt import PBT_DATA_DIR
 
 
 # Visualization
-
 def plot_pbt_runs(pbt_model_paths, seeds, single=False, save=False, show=False):
     """Plots sparse rewards"""
     for layout in pbt_model_paths.keys():
@@ -40,8 +38,11 @@ def plot_pbt_runs(pbt_model_paths, seeds, single=False, save=False, show=False):
         plt.ylabel("Mean episode reward")
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
         plt.tight_layout()
-        if save: plt.savefig("rew_pbt_" + layout, bbox_inches='tight')
-        if show: plt.show()
+        if save:
+            plt.savefig("rew_pbt_" + layout, bbox_inches='tight')
+        if show:
+            plt.show()
+
 
 def get_logs(save_dir, seeds, agent_array=None):
     """
@@ -58,14 +59,16 @@ def get_logs(save_dir, seeds, agent_array=None):
         logs_across_seeds.append((seed_log, seed_cfg))
     return logs_across_seeds
 
-# Evaluation
 
+# Evaluation
 def evaluate_all_pbt_models(pbt_model_paths, best_bc_model_paths, num_rounds, seeds, best=False):
     pbt_performance = defaultdict(lambda: defaultdict(list))
     for layout in pbt_model_paths.keys():
         print(layout)
-        pbt_performance = evaluate_pbt_for_layout(layout, num_rounds, pbt_performance, pbt_model_paths, best_bc_model_paths['test'], seeds=seeds, best=best)
+        pbt_performance = evaluate_pbt_for_layout(layout, num_rounds, pbt_performance, pbt_model_paths,
+                                                  best_bc_model_paths['test'], seeds=seeds, best=best)
     return prepare_nested_default_dict_for_pickle(pbt_performance)
+
 
 def evaluate_pbt_for_layout(layout_name, num_rounds, pbt_performance, pbt_model_paths, best_test_bc_models, seeds, best=False):
     bc_agent, bc_params = get_bc_agent_from_saved(model_name=best_test_bc_models[layout_name])
@@ -79,6 +82,7 @@ def evaluate_pbt_for_layout(layout_name, num_rounds, pbt_performance, pbt_model_
     pbt_agents = [get_pbt_agent_from_config(pbt_save_dir, pbt_config["sim_threads"], seed=seed, agent_idx=0, best=best) for seed in seeds]
     eval_pbt_over_seeds(pbt_agents, bc_agent, layout_name, num_rounds, pbt_performance, ae)
     return pbt_performance
+
 
 def eval_pbt_over_seeds(pbt_agents, bc_agent, layout_name, num_rounds, pbt_performance, agent_evaluator):
     ae = agent_evaluator
@@ -96,8 +100,8 @@ def eval_pbt_over_seeds(pbt_agents, bc_agent, layout_name, num_rounds, pbt_perfo
         pbt_performance[layout_name]["PBT+BC_1"].append(avg_bc_and_pbt)
     return pbt_performance
 
-def run_all_pbt_experiments(best_bc_model_paths):
 
+def run_all_pbt_experiments(best_bc_model_paths):
     # best_bc_models = load_pickle("data/bc_runs/best_bc_models")
     seeds = [8015, 3554,  581, 5608, 4221]
 

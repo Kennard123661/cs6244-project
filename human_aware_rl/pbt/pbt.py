@@ -8,16 +8,18 @@ from tensorflow.saved_model import simple_save
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 
-PBT_DATA_DIR = "data/pbt_runs/"
+from human_aware_rl.directory import CHECKPOINT_DIR
+
+PBT_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'pbt_runs' + os.path.sep)
+# PBT_DATA_DIR = "data/pbt_runs/"
 
 ex = Experiment('PBT')
 ex.observers.append(FileStorageObserver.create(PBT_DATA_DIR + "pbt_exps"))
 
 
-from overcooked_ai_py.utils import profile, load_pickle, save_pickle, save_dict_to_file, load_dict_from_file
+from overcooked_ai_py.utils import save_dict_to_file, load_dict_from_file
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
-from overcooked_ai_py.agents.benchmarking import AgentEvaluator
 from overcooked_ai_py.agents.agent import AgentPair
 
 from human_aware_rl.utils import create_dir_if_not_exists, delete_dir_if_exists, reset_tf, set_global_seed
@@ -139,9 +141,9 @@ class PBTAgent(object):
         print("New params", params_to_mutate)
         return params_to_mutate
 
+
 @ex.config
 def my_config():
-
     ##################
     # GENERAL PARAMS #
     ##################
@@ -279,7 +281,8 @@ def my_config():
     }
 
     # Approximate info stats
-    GRAD_UPDATES_PER_AGENT = STEPS_PER_UPDATE * MINIBATCHES * (PPO_RUN_TOT_TIMESTEPS // TOTAL_BATCH_SIZE) * ITER_PER_SELECTION * NUM_PBT_ITER // POPULATION_SIZE
+    GRAD_UPDATES_PER_AGENT = STEPS_PER_UPDATE * MINIBATCHES * (PPO_RUN_TOT_TIMESTEPS // TOTAL_BATCH_SIZE) * \
+                             ITER_PER_SELECTION * NUM_PBT_ITER // POPULATION_SIZE
 
     print("Total steps per agent", TOTAL_STEPS_PER_AGENT)
     print("Grad updates per agent", GRAD_UPDATES_PER_AGENT)
@@ -330,6 +333,7 @@ def my_config():
         "grad_updates_per_agent": GRAD_UPDATES_PER_AGENT
     }
 
+
 @ex.named_config
 def fixed_mdp():
     LOCAL_TESTING = False
@@ -344,6 +348,7 @@ def fixed_mdp():
     MINIBATCHES = 6 if not LOCAL_TESTING else 2
 
     LR = 5e-4
+
 
 @ex.named_config
 def fixed_mdp_rnd_init():
@@ -364,6 +369,7 @@ def fixed_mdp_rnd_init():
 
     LR = 5e-4
 
+
 @ex.named_config
 def padded_all_scenario():
     # NOTE: Deprecated
@@ -383,6 +389,7 @@ def padded_all_scenario():
 
     LR = 5e-4
     REW_SHAPING_HORIZON = 1e7
+
 
 def pbt_one_run(params, seed):
     # Iterating noptepochs over same batch data but shuffled differently
@@ -434,7 +441,7 @@ def pbt_one_run(params, seed):
 
     def pbt_training():
         best_sparse_rew_avg = [-np.Inf] * population_size
-
+        print(params['NUM_PBT_ITER'])
         for pbt_iter in range(1, params["NUM_PBT_ITER"] + 1):
             print("\n\n\nPBT ITERATION NUM {}".format(pbt_iter))
 
@@ -496,7 +503,8 @@ def pbt_one_run(params, seed):
                     pbt_agent_other = pbt_population[j]
 
                     agent_pair = AgentPair(pbt_agent.get_agent(), pbt_agent_other.get_agent())
-                    trajs = overcooked_env.get_rollouts(agent_pair, params["NUM_SELECTION_GAMES"], reward_shaping=reward_shaping_param)
+                    trajs = overcooked_env.get_rollouts(agent_pair, params["NUM_SELECTION_GAMES"],
+                                                        reward_shaping=reward_shaping_param)
                     dense_rews, sparse_rews, lens = trajs["ep_returns"], trajs["ep_returns_sparse"], trajs["ep_lengths"]
                     rew_per_step = np.sum(dense_rews) / np.sum(lens)
                     avg_ep_returns_dict[i].append(rew_per_step)
@@ -539,6 +547,7 @@ def pbt_one_run(params, seed):
     pbt_training()
     reset_tf()
     print(params["SAVE_DIR"])
+
 
 @ex.automain
 def run_pbt(params):
