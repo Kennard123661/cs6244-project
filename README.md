@@ -1,3 +1,16 @@
+# CS6244 Project
+
+## Installation
+
+```bash
+conda create -n cs6244-project python==3.7
+conda activate cs6244-project
+pip install -r requirements.txt
+conda install mpi4py
+./install.sh
+```
+
+
 # Human-Aware Reinforcement Learning
 
 This code can be used to reproduce the results in the paper [On the Utility of Learning about Humans for Human-AI Coordination](https://arxiv.org/abs/1910.05789). *Note that this repository uses a specific older commit of the [overcooked_ai repository](https://github.com/HumanCompatibleAI/overcooked_ai)*, and should not be expected to work with the current version of that repository.
