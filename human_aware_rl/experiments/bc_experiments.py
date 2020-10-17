@@ -7,12 +7,13 @@ from overcooked_ai_py.agents.benchmarking import AgentEvaluator
 from overcooked_ai_py.agents.agent import AgentPair
 
 from human_aware_rl.utils import reset_tf, set_global_seed, common_keys_equal
-from human_aware_rl.imitation.behavioural_cloning import train_bc_agent, eval_with_benchmarking_from_saved, BC_SAVE_DIR, plot_bc_run, DEFAULT_BC_PARAMS, get_bc_agent_from_saved
+from human_aware_rl.imitation.behavioural_cloning import train_bc_agent, eval_with_benchmarking_from_saved, \
+    BC_SAVE_DIR, plot_bc_run, DEFAULT_BC_PARAMS, get_bc_agent_from_saved
 from human_aware_rl.directory import DATA_DIR
 
 # Path for dict containing the best bc models paths
-BEST_BC_MODELS_PATH = BC_SAVE_DIR + "best_bc_model_paths"
-BC_MODELS_EVALUATION_PATH = BC_SAVE_DIR + "bc_models_all_evaluations"
+BEST_BC_MODELS_PATH = os.path.join(BC_SAVE_DIR, "best_bc_model_paths")
+BC_MODELS_EVALUATION_PATH = os.path.join(BC_SAVE_DIR, "bc_models_all_evaluations")
 
 
 def train_bc_agent_from_hh_data(layout_name, agent_name, num_epochs, lr, adam_eps, model):

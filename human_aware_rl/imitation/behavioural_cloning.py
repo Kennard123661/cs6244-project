@@ -17,20 +17,22 @@ from overcooked_ai_py.utils import save_pickle, load_pickle
 
 from human_aware_rl.baselines_utils import create_dir_if_not_exists
 from human_aware_rl.human.process_dataframes import save_npz_file, get_trajs_from_data
-from human_aware_rl.directory import CHECKPOINT_DIR
+from human_aware_rl.directory import CHECKPOINT_DIR, DATA_DIR
 
 BC_SAVE_DIR = os.path.join(CHECKPOINT_DIR, 'bc_runs' + os.path.sep)
+TRAIN_TRIALS_FILE = os.path.join(DATA_DIR, 'human', 'anonymized', 'clean_train_trials.pkl')
+
 
 DEFAULT_DATA_PARAMS = {
     "train_mdps": ["simple"],
     "ordered_trajs": True,
     "human_ai_trajs": False,
-    "data_path": "data/human/anonymized/clean_train_trials.pkl"
+    "data_path": TRAIN_TRIALS_FILE
 }
 
 DEFAULT_BC_PARAMS = {
     "data_params": DEFAULT_DATA_PARAMS,
-    "mdp_params": {}, # Nothing to overwrite defaults
+    "mdp_params": {},  # Nothing to overwrite defaults
     "env_params": DEFAULT_ENV_PARAMS,
     "mdp_fn_params": {}
 }
@@ -38,7 +40,7 @@ DEFAULT_BC_PARAMS = {
 
 def init_gym_env(bc_params):
     env_setup_params = copy.deepcopy(bc_params)
-    del env_setup_params["data_params"] # Not necessary for setting up env
+    del env_setup_params["data_params"]  # Not necessary for setting up env
     mdp = OvercookedGridworld.from_layout_name(**bc_params["mdp_params"])
     env = OvercookedEnv(mdp, **bc_params["env_params"])
     gym_env = gym.make("Overcooked-v0")
@@ -76,7 +78,6 @@ def bc_from_dataset_and_params(dataset, bc_params, model_save_dir, num_epochs, l
 
 def save_bc_model(model_save_dir, model, bc_params):
     print("Saved BC model at", BC_SAVE_DIR + model_save_dir)
-    print(model_save_dir)
     model.save(BC_SAVE_DIR + model_save_dir + "model")
     bc_metadata = {
         "bc_params": bc_params,
