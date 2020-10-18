@@ -219,12 +219,9 @@ def get_network_builder(name):
         return network_fn
 
     """
-    print(mapping)
     if callable(name):
-        print('here2')
         return name
     elif name in mapping:
-        print('here')
         return mapping[name]
     else:
         raise ValueError('Unknown network type: {}'.format(name))
