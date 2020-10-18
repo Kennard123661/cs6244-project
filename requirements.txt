@@ -6,3 +6,4 @@ matplotlib
 gym
 cmake
 smmap
+gitdb
