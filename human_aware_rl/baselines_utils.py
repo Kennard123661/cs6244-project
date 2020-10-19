@@ -294,9 +294,13 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
         return np.array(action_idxs)
 
     def state_policy(mdp_state, mdp, agent_index, stochastic=True, return_action_probs=False):
-        """Takes in a Overcooked state object and returns the corresponding action"""
-        obs = mdp.lossless_state_encoding(mdp_state)[agent_index]
-        padded_obs = np.array([obs] + [np.zeros(obs.shape)] * (sim_threads - 1))
+        def state_to_obs(state):
+            """Takes in a Overcooked state object and returns the corresponding action"""
+            obs = mdp.lossless_state_encoding(mdp_state)[agent_index]
+            padded_obs = np.array([obs] + [np.zeros(obs.shape)] * (sim_threads - 1))
+            return padded_obs
+
+        padded_obs = [state_to_obs(s) for s in mdp_state]
         action_probs = step_fn(padded_obs)[0] # Discards all padding predictions
 
         if return_action_probs:

@@ -110,6 +110,7 @@ class AgentFromPolicy(Agent):
         self.history = []
         self.stochastic = stochastic
         self.action_probs = action_probs
+        self.queue = []
 
     def action(self, state):
         """
@@ -119,8 +120,12 @@ class AgentFromPolicy(Agent):
         Requires having set self.agent_index and self.mdp
         """
         self.history.append(state)
+        if len(self.queue) > 10:
+            self.pop(0)
+        self.queue.append(state)
+
         try:
-            return self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs)
+            return self.state_policy(self.queue, self.mdp, self.agent_index, self.stochastic, self.action_probs)
         except AttributeError as e:
             raise AttributeError("{}. Most likely, need to set the agent_index or mdp of the Agent before calling the action method.".format(e))
 
