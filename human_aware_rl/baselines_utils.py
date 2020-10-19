@@ -197,12 +197,12 @@ def conv_lstm_network_fn(**kwargs):
                 name="conv_{}".format(i)
             )
         
-        h = tf.layers.flatten(conv_out)
+        feats = tf.layers.flatten(conv_out)
 
         M = tf.placeholder(tf.float32, [nbatch]) #mask (done t-1)
         S = tf.placeholder(tf.float32, [nenv, 2*nlstm]) #states
 
-        xs = batch_to_seq(h, nenv, nsteps)
+        xs = batch_to_seq(feats, nenv, nsteps)
         ms = batch_to_seq(M, nenv, nsteps)
 
         h5, snew = utils.lstm(xs, ms, S, scope='lstm', nh=nlstm)
@@ -267,6 +267,8 @@ def get_model_policy_from_saved_model(save_dir, sim_threads):
 
 def get_model_policy_from_model(model, sim_threads, is_joint_action=False):
     def step_fn(obs):
+        print(obs)
+        print(obs.shape)
         action_probs = model.act_model.step(obs, return_action_probs=True)
         return action_probs
     return get_model_policy(step_fn, sim_threads, is_joint_action=is_joint_action)
