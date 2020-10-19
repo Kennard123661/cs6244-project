@@ -70,7 +70,8 @@ def bc_from_dataset_and_params(dataset, bc_params, model_save_dir, num_epochs, l
     create_dir_if_not_exists(BC_SAVE_DIR + model_save_dir)
 
     model = GAIL("MlpPolicy", gym_env, dataset, verbose=1)
-    model.pretrain(dataset, n_epochs=num_epochs, learning_rate=lr, adam_epsilon=adam_eps, save_dir=BC_SAVE_DIR + model_save_dir)
+    model.pretrain(dataset, n_epochs=num_epochs, learning_rate=lr, adam_epsilon=adam_eps,
+                   save_dir=BC_SAVE_DIR + model_save_dir)
 
     save_bc_model(model_save_dir, model, bc_params)
     return model

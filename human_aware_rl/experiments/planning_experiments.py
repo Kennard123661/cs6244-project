@@ -10,8 +10,8 @@ def get_delivery_horizon(layout):
         return 2
     return 3
 
-def P_BC_evaluation_for_layout(ae, layout, best_bc_models):
 
+def P_BC_evaluation_for_layout(ae, layout, best_bc_models):
     delivery_horizon = get_delivery_horizon(layout)
     print("Delivery horizon for layout {}: {}".format(layout, delivery_horizon))
 
@@ -42,7 +42,6 @@ def P_BC_evaluation_for_layout(ae, layout, best_bc_models):
     data1 = ae.evaluate_agent_pair(ap_training, num_games=1, display=True)
     layout_p_bc_eval['P_BC_test+BC_test_1'] = data1['ep_returns'][0]
     print("P_BC_test + BC_test", data0['ep_returns'][0], data1['ep_returns'][0])
-
 
     ########################
     # P_BC_train + BC_test #
