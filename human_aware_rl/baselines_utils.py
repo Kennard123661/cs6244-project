@@ -16,6 +16,8 @@ from baselines.ppo2.ppo2 import learn
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.models import register
+from baselines.a2c import utils
+from baselines.a2c.utils import batch_to_seq, seq_to_batch
         
 
 class RewardShapingEnv(VecEnvWrapper):
@@ -153,6 +155,64 @@ def conv_network_fn(**kwargs):
         # num_tf_params()
         return out
     return network_fn
+
+
+@register("conv_and_lstm")
+def conv_lstm_network_fn(**kwargs):
+    """Used to register custom network type used by Baselines for Overcooked"""
+
+    if "network_kwargs" in kwargs.keys():
+        params = kwargs["network_kwargs"]
+    else:
+        params = kwargs
+
+    num_hidden_layers = params["NUM_HIDDEN_LAYERS"]
+    size_hidden_layers = params["SIZE_HIDDEN_LAYERS"]
+    num_filters = params["NUM_FILTERS"]
+    num_convs = params["NUM_CONV_LAYERS"]
+
+    def network_fn(X, nenv=1):
+        print(X.shape)
+        nbatch = X.shape[0]
+        nsteps = nbatch // nenv
+        nlstm = 128
+
+        conv_out = tf.layers.conv2d(
+            inputs=X, 
+            filters=num_filters, 
+            kernel_size=[5, 5],
+            padding="same",
+            activation=tf.nn.leaky_relu,
+            name="conv_initial"
+        )
+
+        for i in range(0, num_convs - 1):
+            padding = "same" if i < num_convs - 2 else "valid"
+            conv_out = tf.layers.conv2d(
+                inputs=conv_out,
+                filters=num_filters,
+                kernel_size=[3, 3],
+                padding=padding,
+                activation=tf.nn.leaky_relu,
+                name="conv_{}".format(i)
+            )
+        
+        h = tf.layers.flatten(conv_out)
+
+        M = tf.placeholder(tf.float32, [nbatch]) #mask (done t-1)
+        S = tf.placeholder(tf.float32, [nenv, 2*nlstm]) #states
+
+        xs = batch_to_seq(h, nenv, nsteps)
+        ms = batch_to_seq(M, nenv, nsteps)
+
+        h5, snew = utils.lstm(xs, ms, S, scope='lstm', nh=nlstm)
+
+        h = seq_to_batch(h5)
+        initial_state = np.zeros(S.shape.as_list(), dtype=float)
+
+        return h, {'S':S, 'M':M, 'state':snew, 'initial_state':initial_state}
+    return network_fn
+
 
 
 def get_vectorized_gym_env(base_env, gym_env_name, featurize_fn=None, **kwargs):
