@@ -134,7 +134,7 @@ def my_config():
     ##################
 
     # Network type used
-    NETWORK_TYPE = "conv_and_mlp"
+    NETWORK_TYPE = "conv_and_lstm"
 
     # Network params
     NUM_HIDDEN_LAYERS = 3

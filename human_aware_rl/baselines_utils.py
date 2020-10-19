@@ -16,6 +16,8 @@ from baselines.ppo2.ppo2 import learn
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.models import register
+from baselines.a2c import utils
+from baselines.a2c.utils import batch_to_seq, seq_to_batch
         
 
 class RewardShapingEnv(VecEnvWrapper):
@@ -155,6 +157,64 @@ def conv_network_fn(**kwargs):
     return network_fn
 
 
+@register("conv_and_lstm")
+def conv_lstm_network_fn(**kwargs):
+    """Used to register custom network type used by Baselines for Overcooked"""
+
+    if "network_kwargs" in kwargs.keys():
+        params = kwargs["network_kwargs"]
+    else:
+        params = kwargs
+
+    num_hidden_layers = params["NUM_HIDDEN_LAYERS"]
+    size_hidden_layers = params["SIZE_HIDDEN_LAYERS"]
+    num_filters = params["NUM_FILTERS"]
+    num_convs = params["NUM_CONV_LAYERS"]
+
+    def network_fn(X, nenv=1):
+        print(X.shape)
+        nbatch = X.shape[0]
+        nsteps = nbatch // nenv
+        nlstm = 128
+
+        conv_out = tf.layers.conv2d(
+            inputs=X, 
+            filters=num_filters, 
+            kernel_size=[5, 5],
+            padding="same",
+            activation=tf.nn.leaky_relu,
+            name="conv_initial"
+        )
+
+        for i in range(0, num_convs - 1):
+            padding = "same" if i < num_convs - 2 else "valid"
+            conv_out = tf.layers.conv2d(
+                inputs=conv_out,
+                filters=num_filters,
+                kernel_size=[3, 3],
+                padding=padding,
+                activation=tf.nn.leaky_relu,
+                name="conv_{}".format(i)
+            )
+        
+        h = tf.layers.flatten(conv_out)
+
+        M = tf.placeholder(tf.float32, [nbatch]) #mask (done t-1)
+        S = tf.placeholder(tf.float32, [nenv, 2*nlstm]) #states
+
+        xs = batch_to_seq(h, nenv, nsteps)
+        ms = batch_to_seq(M, nenv, nsteps)
+
+        h5, snew = utils.lstm(xs, ms, S, scope='lstm', nh=nlstm)
+
+        h = seq_to_batch(h5)
+        initial_state = np.zeros(S.shape.as_list(), dtype=float)
+
+        return h, {'S':S, 'M':M, 'state':snew, 'initial_state':initial_state}
+    return network_fn
+
+
+
 def get_vectorized_gym_env(base_env, gym_env_name, featurize_fn=None, **kwargs):
     """
     Create a one-player overcooked gym environment in which the other player is fixed (embedded in the environment)
@@ -234,9 +294,13 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
         return np.array(action_idxs)
 
     def state_policy(mdp_state, mdp, agent_index, stochastic=True, return_action_probs=False):
-        """Takes in a Overcooked state object and returns the corresponding action"""
-        obs = mdp.lossless_state_encoding(mdp_state)[agent_index]
-        padded_obs = np.array([obs] + [np.zeros(obs.shape)] * (sim_threads - 1))
+        def state_to_obs(state):
+            """Takes in a Overcooked state object and returns the corresponding action"""
+            obs = mdp.lossless_state_encoding(mdp_state)[agent_index]
+            padded_obs = np.array([obs] + [np.zeros(obs.shape)] * (sim_threads - 1))
+            return padded_obs
+
+        padded_obs = [state_to_obs(s) for s in mdp_state]
         action_probs = step_fn(padded_obs)[0] # Discards all padding predictions
 
         if return_action_probs:

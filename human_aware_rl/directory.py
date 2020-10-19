@@ -4,8 +4,8 @@ import os
 
 
 node = platform.node()
-if node == 'kennardng-desktop':
-    PROJECT_DIR = '/home/kennardng/Desktop/cs6244-project'
+if node == 'fausticcore':
+    PROJECT_DIR = '/home/faust/git/cs6244-project'
 else:
     user_id = getpass.getuser()
     if user_id == 'e0036319':
