@@ -157,7 +157,6 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         cliprangenow = cliprange(frac)
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()  # pylint: disable=E0632
-
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run()  # pylint: disable=E0632
 
@@ -195,18 +194,14 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
                 selected_idxs = inds[start:end]
                 end_idxs = selected_idxs + 1
-                start_idxs = end_idxs - history_length
                 trajectory_start_idxs = np.floor(selected_idxs / num_steps).astype(int) * num_steps
 
-                window_idxs = []
-                for i, start_idx in enumerate(start_idxs):
-                    end_idx = end_idxs[i]
-                    sample_window = np.arange(start_idx, end_idx)
-                    min_idx = trajectory_start_idxs[i]
-                    sample_window = np.clip(a=sample_window, a_min=min_idx, a_max=None).astype(int)
-                    assert len(sample_window) == history_length
-                    window_idxs.append(sample_window)
-                window_idxs = np.concatenate(window_idxs, axis=0)
+                idxs = np.arange(-history_length, 0)  # T
+                idxs = np.expand_dims(idxs, axis=0)  # 1 x T
+                idxs = np.repeat(idxs, axis=0, repeats=nbatch_train)
+                idxs = idxs + np.expand_dims(end_idxs, axis=1)
+                idxs = np.clip(idxs, a_min=np.expand_dims(trajectory_start_idxs, axis=1), a_max=None)
+                window_idxs = np.reshape(idxs, newshape=[np.prod(idxs.shape)])
 
                 batch_obs = obs[window_idxs]
                 _, h, w, d = batch_obs.shape

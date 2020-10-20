@@ -2,8 +2,6 @@ import gym
 import time
 import numpy as np
 import tensorflow as tf
-from matplotlib.axes._base import _axis_method_wrapper
-
 from overcooked_ai_py.mdp.actions import Direction, Action
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv

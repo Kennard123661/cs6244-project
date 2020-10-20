@@ -84,7 +84,8 @@ class Runner(AbstractEnvRunner):
                 other_agent_actions = self.env.other_agent.direct_policy(self.obs1)
                 return other_agent_actions
 
-        for _ in range(self.nsteps):
+        print('running simulation to get timesteps')
+        for _ in tqdm(range(self.nsteps)):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             overcooked = 'env_name' in self.env.__dict__.keys() and self.env.env_name == "Overcooked-v0"
@@ -145,7 +146,8 @@ class Runner(AbstractEnvRunner):
 
             joint_action = [(actions[i], other_agent_actions[i]) for i in range(len(actions))]
 
-            mb_obs.append(self.obs0[-1].copy())
+            # add only the final state
+            mb_obs.append(self.obs0[:, -1].copy())
 
             mb_actions.append(actions)
             mb_values.append(values)
@@ -159,11 +161,13 @@ class Runner(AbstractEnvRunner):
 
                 # update the observations as a queue
                 both_obs = obs["both_agent_obs"]
-                self.obs0[:, :-1] = self.obs0[:, 1:]
-                self.obs0[:, -1] = both_obs[:, 0]
+                # self.obs0[:, :-1] = self.obs0[:, 1:]
+                # self.obs0[:, -1] = both_obs[:, 0]
+                self.obs0 = np.concatenate([self.obs0[:, 1:], np.expand_dims(both_obs[:, 0], axis=1)], axis=1)
+                self.obs1 = np.concatenate([self.obs1[:, 1:], np.expand_dims(both_obs[:, 1], axis=1)], axis=1)
 
-                self.obs1[:, :-1] = self.obs1[:, 1:]
-                self.obs1[:, -1] = both_obs[:, 1]
+                # self.obs1[:, :-1] = self.obs1[:, 1:]
+                # self.obs1[:, -1] = both_obs[:, 1]
 
                 self.curr_state = obs["overcooked_state"]
                 self.other_agent_idx = obs["other_agent_env_idx"]
@@ -177,10 +181,8 @@ class Runner(AbstractEnvRunner):
             mb_rewards.append(rewards)
         print("Other agent actions took", other_agent_simulation_time, "seconds")
         tot_time = time.time() - tot_time
-        print("Total simulation time for {} steps: {} \t Other agent action time: {} \t {} steps/s".format(self.nsteps,
-                                                                                                           tot_time,
-                                                                                                           int_time,
-                                                                                                           self.nsteps / tot_time))
+        print("Total simulation time for {} steps: {} \t Other agent action time: {} \t {} steps/s"
+              .format(self.nsteps, tot_time, int_time, self.nsteps / tot_time))
 
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
