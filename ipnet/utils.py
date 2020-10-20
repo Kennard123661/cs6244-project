@@ -153,7 +153,7 @@ def conv_network_fn(**kwargs):
         assert out.shape == 2
         return out
 
-    def hetnetwork_head(_inputs, out_shape: list):
+    def hypernetwork_head(_inputs, out_shape: list):
         """
         Predicts the weights for a single linear layer.
 
@@ -197,11 +197,11 @@ def conv_network_fn(**kwargs):
 
         out = tf.reshape(out, shape=[batchsize, h_length * out_dims])
         weights, biases = [], []
-        weight, bias = hetnetwork_head(_inputs=out, out_shape=[_policy_in_dims, size_hidden_layers])
+        weight, bias = hypernetwork_head(_inputs=out, out_shape=[_policy_in_dims, size_hidden_layers])
         weights.append(weight)
         biases.append(bias)
         for _ in range(num_hidden_layers-1):
-            weight, bias = hetnetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
+            weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
             weight.append(weight)
             biases.append(bias)
         return weights, biases
