@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 from baselines.common.runners import AbstractEnvRunner
 
 class Runner(AbstractEnvRunner):
@@ -16,6 +17,8 @@ class Runner(AbstractEnvRunner):
         self.lam = lam
         # Discount rate
         self.gamma = gamma
+        # print("Runner init", self.states, self.dones)
+
 
     def run(self):
         # Here, we init the lists that will contain the mb of experiences
@@ -45,15 +48,26 @@ class Runner(AbstractEnvRunner):
             else:
                 other_agent_actions = self.env.other_agent.direct_policy(self.obs1)
                 return other_agent_actions
-            
 
-        for _ in range(self.nsteps):
+
+        for i in range(self.nsteps):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             overcooked = 'env_name' in self.env.__dict__.keys() and self.env.env_name == "Overcooked-v0"
             if overcooked:
+                ######
+                # print(self.__dict__)
+                # print(self.__dict__.keys())
+                # targ_dict = self.__dict__.copy()
+                # targ_dict['env'] = None
+                # targ_dict['model'] = None
+                # with open('/home/space/Github/cs6244-project/step_dict.pkl', 'wb') as handle:
+                #     pickle.dump(targ_dict, handle)
+                ####
+                # if i == 0:
+                #     print("in loop", self.states, self.dones)
+                #     exit()
                 actions, values, self.states, neglogpacs = self.model.step(self.obs0, S=self.states, M=self.dones)
-
                 import time
                 current_simulation_time = time.time()
 
@@ -79,7 +93,7 @@ class Runner(AbstractEnvRunner):
                         else:
                             bc_action = other_agent_actions_bc[i]
                             other_agent_actions.append(bc_action)
-                
+
                 else:
                     other_agent_actions = np.zeros_like(self.curr_state)
 
@@ -122,6 +136,7 @@ class Runner(AbstractEnvRunner):
             # Infos contains a ton of useful informations
             if overcooked:
                 obs, rewards, self.dones, infos = self.env.step(joint_action)
+                # print("naniiiiiiiiiiiiiiiiiiiiiiiiiii tensor?", type(self.dones), self.dones) # start with list but changed to array here
                 both_obs = obs["both_agent_obs"]
                 self.obs0[:] = both_obs[:, 0, :, :]
                 self.obs1[:] = both_obs[:, 1, :, :]
@@ -138,7 +153,7 @@ class Runner(AbstractEnvRunner):
         print("Other agent actions took", other_agent_simulation_time, "seconds")
         tot_time = time.time() - tot_time
         print("Total simulation time for {} steps: {} \t Other agent action time: {} \t {} steps/s".format(self.nsteps, tot_time, int_time, self.nsteps / tot_time))
-        
+
         #batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)

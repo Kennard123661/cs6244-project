@@ -1,4 +1,7 @@
-import gym, time, os, seaborn
+import gym
+import time
+import os
+import seaborn
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -9,7 +12,7 @@ from sacred.observers import FileStorageObserver
 from tensorflow.saved_model import simple_save
 from human_aware_rl.directory import CHECKPOINT_DIR
 
-PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ppo_runs' + os.path.sep)
+PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ppo_runs' + os.path.sep) #cs6244/checkpoints/ppo_runs/
 # PPO_DATA_DIR = 'data/ppo_runs/'
 
 ex = Experiment('PPO')
@@ -30,7 +33,7 @@ from human_aware_rl.experiments.bc_experiments import BEST_BC_MODELS_PATH
 # PARAMS
 @ex.config
 def my_config():
-    
+
     ##################
     # GENERAL PARAMS #
     ##################
@@ -39,7 +42,8 @@ def my_config():
     EX_NAME = "undefined_name"
 
     if TIMESTAMP_DIR:
-        SAVE_DIR = PPO_DATA_DIR + time.strftime('%Y_%m_%d-%H_%M_%S_') + EX_NAME + "/"
+        SAVE_DIR = PPO_DATA_DIR + \
+            time.strftime('%Y_%m_%d-%H_%M_%S_') + EX_NAME + "/"
     else:
         SAVE_DIR = PPO_DATA_DIR + EX_NAME + "/"
 
@@ -48,7 +52,7 @@ def my_config():
     RUN_TYPE = "ppo"
 
     # Reduce parameters to be able to run locally to test for simple bugs
-    LOCAL_TESTING = False
+    LOCAL_TESTING = True
 
     # Choice among: bc_train, bc_test, sp, hm, rnd
     OTHER_AGENT_TYPE = "bc_train"
@@ -96,7 +100,7 @@ def my_config():
     LR = 1e-3
 
     # Factor by which to reduce learning rate over training
-    LR_ANNEALING = 1 
+    LR_ANNEALING = 1
 
     # Entropy bonus coefficient
     ENTROPY = 0.1
@@ -121,27 +125,29 @@ def my_config():
     SELF_PLAY_HORIZON = None
 
     # 0 is default value that does no annealing
-    REW_SHAPING_HORIZON = 0 
+    REW_SHAPING_HORIZON = 0
 
     # Whether mixing of self play policies
     # happens on a trajectory or on a single-timestep level
     # Recommended to keep to true
     TRAJECTORY_SELF_PLAY = True
 
-
     ##################
     # NETWORK PARAMS #
     ##################
 
     # Network type used
-    NETWORK_TYPE = "conv_and_mlp"
+    # NETWORK_TYPE = "conv_and_mlp"
+    # NETWORK_TYPE = "cust_rnn_ctr"
+    # NETWORK_TYPE = "cnn_lstm"
+    NETWORK_TYPE = "lstm"
+    NETWORK_RECURRENT = True
 
     # Network params
     NUM_HIDDEN_LAYERS = 3
     SIZE_HIDDEN_LAYERS = 64
     NUM_FILTERS = 25
     NUM_CONV_LAYERS = 3
-
 
     ##################
     # MDP/ENV PARAMS #
@@ -159,7 +165,7 @@ def my_config():
         "POT_DISTANCE_REW": 0,
         "SOUP_DISTANCE_REW": 0,
     }
-    
+
     # Env params
     horizon = 400
 
@@ -172,9 +178,9 @@ def my_config():
     }
 
     # Approximate info
-    GRAD_UPDATES_PER_AGENT = STEPS_PER_UPDATE * MINIBATCHES * (PPO_RUN_TOT_TIMESTEPS // TOTAL_BATCH_SIZE)
-    print("Grad updates per agent", GRAD_UPDATES_PER_AGENT)
-
+    GRAD_UPDATES_PER_AGENT = STEPS_PER_UPDATE * MINIBATCHES * \
+        (PPO_RUN_TOT_TIMESTEPS // TOTAL_BATCH_SIZE)
+    print("Grad updates per agent: %d" % GRAD_UPDATES_PER_AGENT)
     params = {
         "RUN_TYPE": RUN_TYPE,
         "SEEDS": SEEDS,
@@ -214,6 +220,7 @@ def my_config():
         "NUM_FILTERS": NUM_FILTERS,
         "NUM_CONV_LAYERS": NUM_CONV_LAYERS,
         "NETWORK_TYPE": NETWORK_TYPE,
+        "NETWORK_RECURRENT": NETWORK_RECURRENT,
         "SAVE_BEST_THRESH": SAVE_BEST_THRESH,
         "TRAJECTORY_SELF_PLAY": TRAJECTORY_SELF_PLAY,
         "VIZ_FREQUENCY": VIZ_FREQUENCY,
@@ -228,7 +235,7 @@ def save_ppo_model(model, save_folder):
         save_folder,
         inputs={"obs": model.act_model.X},
         outputs={
-            "action": model.act_model.action, 
+            "action": model.act_model.action,
             "value": model.act_model.vf,
             "action_probs": model.act_model.action_probs
         }
@@ -256,9 +263,11 @@ def configure_other_agent(params, gym_env, mlp, mdp):
         gym_env.use_action_method = True
         # Make sure environment params are the same in PPO as in the BC model
         for k, v in bc_params["env_params"].items():
-            assert v == params["env_params"][k], "{} did not match. env_params: {} \t PPO params: {}".format(k, v, params[k])
+            assert v == params["env_params"][k], "{} did not match. env_params: {} \t PPO params: {}".format(
+                k, v, params[k])
         for k, v in bc_params["mdp_params"].items():
-            assert v == params["mdp_params"][k], "{} did not match. mdp_params: {} \t PPO params: {}".format(k, v, params[k])
+            assert v == params["mdp_params"][k], "{} did not match. mdp_params: {} \t PPO params: {}".format(
+                k, v, params[k])
 
     elif params["OTHER_AGENT_TYPE"] == "rnd":
         agent = RandomAgent()
@@ -268,7 +277,7 @@ def configure_other_agent(params, gym_env, mlp, mdp):
 
     else:
         raise ValueError("unknown type of agent to match with")
-        
+
     if not params["OTHER_AGENT_TYPE"] == "sp":
         assert mlp.mdp == mdp
         agent.set_mdp(mdp)
@@ -276,7 +285,8 @@ def configure_other_agent(params, gym_env, mlp, mdp):
 
 
 def load_training_data(run_name, seeds=None):
-    run_dir = PPO_DATA_DIR + run_name + "/"
+    # run_name: ppo_bc_train_simple
+    run_dir = PPO_DATA_DIR + run_name + "/" #cs6244/checkpoints/ppo_runs/ppo_bc_train_simple
     config = load_pickle(run_dir + "config")
 
     # To add backwards compatibility
@@ -288,6 +298,7 @@ def load_training_data(run_name, seeds=None):
 
     train_infos = []
     for seed in seeds:
+        #cs6244/checkpoints/ppo_runs/ppo_bc_train_simple/seed9456/training_info.pickle
         train_info = load_pickle(run_dir + "seed{}/training_info".format(seed))
         train_infos.append(train_info)
 
@@ -298,9 +309,11 @@ def get_ppo_agent(save_dir, seed=0, best=False):
     save_dir = PPO_DATA_DIR + save_dir + '/seed{}'.format(seed)
     config = load_pickle(save_dir + '/config')
     if best:
-        agent = get_agent_from_saved_model(save_dir + "/best", config["sim_threads"])
+        agent = get_agent_from_saved_model(
+            save_dir + "/best", config["sim_threads"])
     else:
-        agent = get_agent_from_saved_model(save_dir + "/ppo_agent", config["sim_threads"])
+        agent = get_agent_from_saved_model(
+            save_dir + "/ppo_agent", config["sim_threads"])
     return agent, config
 
 
@@ -315,30 +328,33 @@ def match_ppo_with_other_agent(save_dir, other_agent, n=1, display=False):
 
 
 def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None, single=False):
+    #name: ppo_bc_train_simple
     from collections import defaultdict
     train_infos, config = load_training_data(name, seeds)
-    
+
     if print_config:
         print(config)
-    
+
     if limit is None:
         limit = config["PPO_RUN_TOT_TIMESTEPS"]
-    
+
     num_datapoints = len(train_infos[0]['eprewmean'])
-    
+
     prop_data = limit / config["PPO_RUN_TOT_TIMESTEPS"]
     ciel_data_idx = int(num_datapoints * prop_data)
 
     datas = []
     for seed_num, info in enumerate(train_infos):
-        info['xs'] = config["TOTAL_BATCH_SIZE"] * np.array(range(1, ciel_data_idx + 1))
+        info['xs'] = config["TOTAL_BATCH_SIZE"] * \
+            np.array(range(1, ciel_data_idx + 1))
         if single:
-            plt.plot(info['xs'], info["ep_sparse_rew_mean"][:ciel_data_idx], alpha=1, label="Sparse{}".format(seed_num))
+            plt.plot(info['xs'], info["ep_sparse_rew_mean"]
+                     [:ciel_data_idx], alpha=1, label="Sparse{}".format(seed_num))
         datas.append(info["ep_sparse_rew_mean"][:ciel_data_idx])
     if not single:
         seaborn.tsplot(time=info['xs'], data=datas)
-    plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+
     if single:
         plt.legend()
 
@@ -367,10 +383,10 @@ def ppo_run(params):
 
         print("Creating env with params", params)
         # Configure mdp
-        
+
         mdp = OvercookedGridworld.from_layout_name(**params["mdp_params"])
         env = OvercookedEnv(mdp, **params["env_params"])
-        mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=True) 
+        mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=True)
 
         # Configure gym env
         gym_env = get_vectorized_gym_env(
@@ -378,7 +394,8 @@ def ppo_run(params):
         )
         gym_env.self_play_randomization = 0 if params["SELF_PLAY_HORIZON"] is None else 1
         gym_env.trajectory_sp = params["TRAJECTORY_SELF_PLAY"]
-        gym_env.update_reward_shaping_param(1 if params["mdp_params"]["rew_shaping_params"] != 0 else 0)
+        gym_env.update_reward_shaping_param(
+            1 if params["mdp_params"]["rew_shaping_params"] != 0 else 0)
 
         configure_other_agent(params, gym_env, mlp, mdp)
 
@@ -388,12 +405,16 @@ def ppo_run(params):
 
         # Train model
         params["CURR_SEED"] = seed
+        print('*********************************************', model)
+
         train_info = update_model(gym_env, model, **params)
-        
+
         # Save model
         save_ppo_model(model, curr_seed_dir + model.agent_name)
         print("Saved training info at", curr_seed_dir + "training_info")
         save_pickle(train_info, curr_seed_dir + "training_info")
         train_infos.append(train_info)
-    
+    # print var in scope
+    for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+        print(i)   # i.name if you want just a name
     return train_infos

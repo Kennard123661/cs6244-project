@@ -14,9 +14,9 @@ from human_aware_rl.ppo.ppo import get_ppo_agent, plot_ppo_run, PPO_DATA_DIR
 
 def plot_runs_training_curves(ppo_bc_model_paths, seeds, single=False, show=False, save=False):
     # Plot PPO BC models
-    for run_type, type_dict in ppo_bc_model_paths.items():
+    for run_type, type_dict in ppo_bc_model_paths.items(): #run_type: 'bc_train' #type_dict: {'simple': 'ppo_bc_train_simple'}
         print(run_type)
-        for layout, layout_model_path in type_dict.items():
+        for layout, layout_model_path in type_dict.items(): #layout: 'simple', layout_model_path: 'ppo_bc_train_simple'}
             print(layout)
             plt.figure(figsize=(8,5))
             plot_ppo_run(layout_model_path, sparse=True, print_config=False, single=single, seeds=seeds[run_type])
@@ -27,6 +27,14 @@ def plot_runs_training_curves(ppo_bc_model_paths, seeds, single=False, show=Fals
 
 
 def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, ppo_bc_model_paths, seeds, best=False, display=False):
+    # ppo_bc_model_paths = {
+    #     'bc_train': {"simple": "ppo_bc_train_simple", ...} ,
+    #     'bc_test':{"simple": "ppo_bc_test_simple", ...}
+    #     }
+    # best_bc_model_paths = {
+    #      'train': { 'simple': 'simple_bc_train_seed3', ...},
+    #      'test': { 'simple': 'simple_bc_test_seed2', ...}
+    #     }
     assert len(seeds["bc_train"]) == len(seeds["bc_test"])
     ppo_bc_performance = defaultdict(lambda: defaultdict(list))
 
@@ -34,7 +42,7 @@ def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, pp
     ppo_bc_train_path = ppo_bc_model_paths['bc_train'][layout]
     ppo_bc_test_path = ppo_bc_model_paths['bc_test'][layout]
     evaluator = AgentEvaluator(mdp_params=bc_params["mdp_params"], env_params=bc_params["env_params"])
-    
+
     for seed_idx in range(len(seeds["bc_train"])):
         agent_ppo_bc_train, ppo_config = get_ppo_agent(ppo_bc_train_path, seeds["bc_train"][seed_idx], best=best)
         assert common_keys_equal(bc_params["mdp_params"], ppo_config["mdp_params"])
@@ -52,11 +60,11 @@ def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, pp
         bc_and_ppo = evaluator.evaluate_agent_pair(AgentPair(agent_bc_test, agent_ppo_bc_train), num_games=num_rounds, display=display)
         avg_bc_and_ppo = np.mean(bc_and_ppo['ep_returns'])
         ppo_bc_performance[layout]["PPO_BC_train+BC_test_1"].append(avg_bc_and_ppo)
-        
+
         # How well could we do if we knew true model BC_test?
         agent_ppo_bc_test, ppo_config = get_ppo_agent(ppo_bc_test_path, seeds["bc_test"][seed_idx], best=best)
         assert common_keys_equal(bc_params["mdp_params"], ppo_config["mdp_params"])
-        
+
         ppo_and_bc = evaluator.evaluate_agent_pair(AgentPair(agent_ppo_bc_test, agent_bc_test), num_games=num_rounds, display=display)
         avg_ppo_and_bc = np.mean(ppo_and_bc['ep_returns'])
         ppo_bc_performance[layout]["PPO_BC_test+BC_test_0"].append(avg_ppo_and_bc)
@@ -64,12 +72,20 @@ def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, pp
         bc_and_ppo = evaluator.evaluate_agent_pair(AgentPair(agent_bc_test, agent_ppo_bc_test), num_games=num_rounds, display=display)
         avg_bc_and_ppo = np.mean(bc_and_ppo['ep_returns'])
         ppo_bc_performance[layout]["PPO_BC_test+BC_test_1"].append(avg_bc_and_ppo)
-    
+
     return ppo_bc_performance
 
 
 def evaluate_all_ppo_bc_models(ppo_bc_model_paths, best_bc_model_paths, num_rounds, seeds, best):
-    layouts = list(ppo_bc_model_paths['bc_train'].keys())
+    # ppo_bc_model_paths = {
+    #     'bc_train': {"simple": "ppo_bc_train_simple", ...} ,
+    #     'bc_test':{"simple": "ppo_bc_test_simple", ...}
+    #     }
+    # best_bc_model_paths = {
+    #      'train': { 'simple': 'simple_bc_train_seed3', ...},
+    #      'test': { 'simple': 'simple_bc_test_seed2', ...}
+    #     }
+    layouts = list(ppo_bc_model_paths['bc_train'].keys()) # "simple", "unident_s", "random1", "random0", "random3"
     ppo_bc_performance = {}
     for layout in layouts:
         print(layout)

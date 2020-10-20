@@ -15,7 +15,7 @@ class PolicyWithValue(object):
     Encapsulates fields and methods for RL policy and value function estimation with shared parameters
     """
 
-    def __init__(self, env, observations, latent, estimate_q=False, vf_latent=None, sess=None, **tensors):
+    def __init__(self, env, observations, latent, estimate_q=False, vf_latent=None, sess=None, name=None, **tensors):
         """
         Parameters:
         ----------
@@ -67,21 +67,29 @@ class PolicyWithValue(object):
         else:
             self.vf = fc(vf_latent, 'vf', 1)
             self.vf = self.vf[:,0]
-        
+
         self.vf = tf.identity(self.vf, name="value")
+        self.name = name
+        self.counter = 0
 
     def _evaluate(self, variables, observation, **extra_feed):
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %s eval ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" % (self.name))
         sess = self.sess
         feed_dict = {self.X: adjust_shape(self.X, observation)}
         for inpt_name, data in extra_feed.items():
             if inpt_name in self.__dict__.keys():
-                inpt = self.__dict__[inpt_name]
+                inpt = self.__dict__[inpt_name] # get placeholder
                 if isinstance(inpt, tf.Tensor) and inpt._op.type == 'Placeholder':
-                    feed_dict[inpt] = adjust_shape(inpt, data)
-
+                    # intialise S with initiate_state if key "S" exist but value None was given
+                    if inpt_name == 'S' and data is None:
+                        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bottom in_eval ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                        print(inpt_name, data, self.initial_state.shape)
+                        # print(self.initial_state)
+                        data = self.initial_state
+                    feed_dict[inpt] = adjust_shape(inpt, data) # key is placeholder, value is the actual reshaped to fit the placeholder
         return sess.run(variables, feed_dict)
 
-    def step(self, observation, return_action_probs=False, **extra_feed):
+    def step(self, observation, return_action_probs=False, return_full_eval=False, **extra_feed):
         """
         Compute next action(s) given the observation(s)
 
@@ -96,12 +104,16 @@ class PolicyWithValue(object):
         -------
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %s Step %d ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" % (self.name, self.counter))
 
+        self.counter += 1
         a, action_probs, v, state, neglogp = self._evaluate([self.action, self.action_probs, self.vf, self.state, self.neglogp], observation, **extra_feed)
         if return_action_probs:
             return action_probs
         if state.size == 0:
             state = None
+        if return_full_eval:
+            return a, action_probs, v, state, neglogp
         return a, v, state, neglogp
 
     def value(self, ob, *args, **kwargs):
@@ -128,11 +140,12 @@ class PolicyWithValue(object):
         tf_util.load_state(load_path, sess=self.sess)
 
 def build_policy(env, policy_network, value_network=None,  normalize_observations=False, estimate_q=False, **policy_kwargs):
+    # Call registered network generator in baseline_utils
     if isinstance(policy_network, str):
         network_type = policy_network
-        policy_network = get_network_builder(network_type)(**policy_kwargs)
+        policy_network = get_network_builder(network_type)(**policy_kwargs) #network_fn function
 
-    def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None):
+    def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None, name=None):
         ob_space = env.observation_space
 
         X = observ_placeholder if observ_placeholder is not None else observation_placeholder(ob_space, batch_size=nbatch)
@@ -153,13 +166,12 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
                 policy_latent, recurrent_tensors = policy_latent
 
                 if recurrent_tensors is not None:
+                    # recurrent: rerun policy_network, break prev graph
                     # recurrent architecture, need a few more steps
                     nenv = nbatch // nsteps
                     assert nenv > 0, 'Bad input for recurrent policy: batch size {} smaller than nsteps {}'.format(nbatch, nsteps)
                     policy_latent, recurrent_tensors = policy_network(encoded_x, nenv)
-                    extra_tensors.update(recurrent_tensors)
-
-
+                    extra_tensors.update(recurrent_tensors) # add recurrent tensor to extra tensor (if prev key exist, replace) dict_keys(['S', 'M', 'state', 'initial_state'])
         _v_net = value_network
 
         if _v_net is None or _v_net == 'shared':
@@ -181,6 +193,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
             vf_latent=vf_latent,
             sess=sess,
             estimate_q=estimate_q,
+            name=name,
             **extra_tensors
         )
         return policy

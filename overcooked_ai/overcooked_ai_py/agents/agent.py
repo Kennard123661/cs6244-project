@@ -23,7 +23,7 @@ class Agent(object):
 
 class AgentGroup(object):
     """
-    AgentGroup is a group of N agents used to sample 
+    AgentGroup is a group of N agents used to sample
     joint actions in the context of an OvercookedEnv instance.
     """
 
@@ -36,8 +36,21 @@ class AgentGroup(object):
         if not all(a0 is not a1 for a0, a1 in itertools.combinations(agents, 2)):
             assert allow_duplicate_agents, "All agents should be separate instances, unless allow_duplicate_agents is set to true"
 
-    def joint_action(self, state):
-        return tuple(a.action(state) for a in self.agents)
+    def joint_action(self, state, **extra_feed):
+        # need to cater for recurrent
+            # recurrent policy
+            # need figure out which agents is recurrent
+        rtn = []
+        for a in self.agents: # a is AgentFromPolicy
+            # agent can be other types eg. ImitationAgentFromPolicy
+            if type(a) is AgentFromPolicy and a.is_recurrent:
+                temp = a.action(state, **extra_feed)
+                rtn.append(temp)
+            else:
+                temp = a.action(state)
+                rtn.append(temp)
+        rtn = tuple(rtn)
+        return rtn
 
     def set_mdp(self, mdp):
         for a in self.agents:
@@ -52,12 +65,14 @@ class AgentPair(AgentGroup):
     """
     AgentPair is the N=2 case of AgentGroup. Unlike AgentGroup,
     it supports having both agents being the same instance of Agent.
-    
+
     NOTE: Allowing duplicate agents (using the same instance of an agent
     for both fields can lead to problems if the agents have state / history)
     """
 
-    def __init__(self, *agents, allow_duplicate_agents=False): 
+    # store states here?
+
+    def __init__(self, *agents, allow_duplicate_agents=False):
         super().__init__(*agents, allow_duplicate_agents=allow_duplicate_agents)
         assert self.n == 2
         self.a0, self.a1 = self.agents
@@ -65,9 +80,10 @@ class AgentPair(AgentGroup):
         if type(self.a0) is CoupledPlanningAgent and type(self.a1) is CoupledPlanningAgent:
             print("If the two planning agents have same params, consider using CoupledPlanningPair instead to reduce computation time by a factor of 2")
 
-    def joint_action(self, state):
+    # override joint_action
+    def joint_action(self, state, **extra_feed):
         if self.a0 is self.a1:
-            # When using the same instance of an agent for self-play, 
+            # When using the same instance of an agent for self-play,
             # reset agent index at each turn to prevent overwriting it
             self.a0.set_agent_index(0)
             action_0 = self.a0.action(state)
@@ -75,7 +91,8 @@ class AgentPair(AgentGroup):
             action_1 = self.a1.action(state)
             return (action_0, action_1)
         else:
-            return super().joint_action(state)
+            # need to cater for recurrent
+            return super().joint_action(state, **extra_feed)
 
 
 class CoupledPlanningPair(AgentPair):
@@ -97,21 +114,24 @@ class AgentFromPolicy(Agent):
     """
     Defines an agent from a `state_policy` and `direct_policy` functions
     """
-    
-    def __init__(self, state_policy, direct_policy, stochastic=True, action_probs=False):
+
+    def __init__(self, state_policy, direct_policy, stochastic=True, action_probs=False, is_recurrent=False):
         """
         state_policy (fn): a function that takes in an OvercookedState instance and returns corresponding actions
         direct_policy (fn): a function that takes in a preprocessed OvercookedState instances and returns actions
         stochastic (Bool): Whether the agent should sample from policy or take argmax
         action_probs (Bool): Whether agent should return action probabilities or a sampled action
         """
-        self.state_policy = state_policy
-        self.direct_policy = direct_policy
+        self.state_policy = state_policy #state_policy (baseline_utils)
+        self.direct_policy = direct_policy #encoded_state_policy (baseline_utils)
         self.history = []
         self.stochastic = stochastic
         self.action_probs = action_probs
+        self.is_recurrent = is_recurrent
+        # need save model states
+        self.states = None
 
-    def action(self, state):
+    def action(self, state, **extra_feed):
         """
         The standard action function call, that takes in a Overcooked state
         and returns the corresponding action.
@@ -120,17 +140,25 @@ class AgentFromPolicy(Agent):
         """
         self.history.append(state)
         try:
-            return self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs)
+            # todo handle M
+            if self.is_recurrent:
+                print("AGENT RECURRENT: ACTION")
+                # print(extra_feed)
+                state_act, self.states = self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs, S=self.states, **extra_feed)
+            else:
+                state_act, model_states = self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs)
+            return state_act
         except AttributeError as e:
             raise AttributeError("{}. Most likely, need to set the agent_index or mdp of the Agent before calling the action method.".format(e))
 
-    def direct_action(self, obs):
+    def direct_action(self, obs, **extra_feed):
         """
         A action called optimized for multi-threaded environment simulations
         involving the agent. Takes in SIM_THREADS (as defined when defining the agent)
         number of observations in post-processed form, and returns as many actions.
         """
-        return self.direct_policy(obs)
+        state_act, model_states = self.direct_policy(obs)
+        return state_act
 
     def reset(self):
         self.history = []
@@ -144,7 +172,7 @@ class RandomAgent(Agent):
 
     def __init__(self, sim_threads=None):
         self.sim_threads = sim_threads
-    
+
     def action(self, state):
         idx = np.random.randint(4)
         return Action.ALL_ACTIONS[idx]
@@ -157,7 +185,7 @@ class StayAgent(Agent):
 
     def __init__(self, sim_threads=None):
         self.sim_threads = sim_threads
-    
+
     def action(self, state):
         return Action.STAY
 
@@ -174,14 +202,14 @@ class FixedPlanAgent(Agent):
     def __init__(self, plan):
         self.plan = plan
         self.i = 0
-    
+
     def action(self, state):
         if self.i >= len(self.plan):
             return Action.STAY
         curr_action = self.plan[self.i]
         self.i += 1
         return curr_action
-    
+
     def reset(self):
         self.i = 0
 
@@ -189,7 +217,7 @@ class FixedPlanAgent(Agent):
 class CoupledPlanningAgent(Agent):
     """
     An agent that uses a joint planner (mlp, a MediumLevelPlanner) to find near-optimal
-    plans. At each timestep the agent re-plans under the assumption that the other agent 
+    plans. At each timestep the agent re-plans under the assumption that the other agent
     is also a CoupledPlanningAgent, and then takes the first action in the plan.
     """
 
@@ -246,7 +274,7 @@ class EmbeddedPlanningAgent(Agent):
             idx = np.random.randint(5)
             return Action.ALL_ACTIONS[idx]
 
-        # Check estimated cost of the plan equals 
+        # Check estimated cost of the plan equals
         # the sum of the costs of each medium-level action
         assert sum([len(item[0]) for item in ml_s_a_plan[1:]]) == cost
 
@@ -267,7 +295,7 @@ class EmbeddedPlanningAgent(Agent):
         self.env.state = initial_env_state
 
         first_joint_action = first_s_a[0][0]
-        if self.logging_level >= 1: 
+        if self.logging_level >= 1:
             print("expected joint action", first_joint_action)
         action = first_joint_action[self.agent_index]
         return action
@@ -277,7 +305,7 @@ class GreedyHumanModel(Agent):
     """
     Agent that at each step selects a medium level action corresponding
     to the most intuitively high-priority thing to do
-    
+
     NOTE: MIGHT NOT WORK IN ALL ENVIRONMENTS, for example random1.layout,
     in which an individual agent cannot complete the task on their own.
     """
@@ -321,7 +349,7 @@ class GreedyHumanModel(Agent):
             chosen_action = chosen_goal_action
         else:
             chosen_action = self.boltzmann_rational_ll_action(start_pos_and_or, chosen_goal)
-        
+
         # HACK: if two agents get stuck, select an action at random that would
         # change the player positions if the other player were not to move
         if self.prev_state is not None and state.players_pos_and_or == self.prev_state.players_pos_and_or:
@@ -354,7 +382,7 @@ class GreedyHumanModel(Agent):
             chosen_goal_action = possible_plans[goal_idx][0][0]
         else:
             chosen_goal, chosen_goal_action = self.get_lowest_cost_action_and_goal(start_pos_and_or, motion_goals)
-        
+
         return chosen_goal, chosen_goal_action
 
     def get_boltzmann_rational_action_idx(self, costs, temperature):
@@ -394,7 +422,7 @@ class GreedyHumanModel(Agent):
         player = state.players[self.agent_index]
         other_player = state.players[1 - self.agent_index]
         am = self.mlp.ml_action_manager
-        
+
         counter_objects = self.mlp.mdp.get_counter_objects_dict(state, list(self.mlp.mdp.terrain_pos_dict['X']))
         pot_states_dict = self.mlp.mdp.get_pot_states(state)
 
@@ -409,17 +437,17 @@ class GreedyHumanModel(Agent):
             else:
                 ready_soups = pot_states_dict[curr_order]['ready']
                 cooking_soups = pot_states_dict[curr_order]['cooking']
-            
+
             soup_nearly_ready = len(ready_soups) > 0 or len(cooking_soups) > 0
             other_has_dish = other_player.has_object() and other_player.get_object().name == 'dish'
-            
+
             if soup_nearly_ready and not other_has_dish:
                 motion_goals = am.pickup_dish_actions(state, counter_objects)
             else:
                 next_order = None
                 if state.num_orders_remaining > 1:
                     next_order = state.next_order
-                
+
                 if next_order == 'onion':
                     motion_goals = am.pickup_onion_actions(state, counter_objects)
                 elif next_order == 'tomato':
@@ -429,10 +457,10 @@ class GreedyHumanModel(Agent):
 
         else:
             player_obj = player.get_object()
-            
+
             if player_obj.name == 'onion':
                 motion_goals = am.put_onion_in_pot_actions(pot_states_dict)
-            
+
             elif player_obj.name == 'tomato':
                 motion_goals = am.put_tomato_in_pot_actions(pot_states_dict)
 
@@ -444,7 +472,7 @@ class GreedyHumanModel(Agent):
 
             else:
                 raise ValueError()
-        
+
         motion_goals = [mg for mg in motion_goals if self.mlp.mp.is_valid_motion_start_goal_pair(player.pos_and_or, mg)]
 
         if len(motion_goals) == 0:
