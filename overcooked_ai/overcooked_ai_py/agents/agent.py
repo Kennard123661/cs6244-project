@@ -44,6 +44,7 @@ class AgentGroup(object):
         for a in self.agents: # a is AgentFromPolicy
             # agent can be other types eg. ImitationAgentFromPolicy
             if type(a) is AgentFromPolicy and a.is_recurrent:
+                # extra_feed will only contain done
                 temp = a.action(state, **extra_feed)
                 rtn.append(temp)
             else:
@@ -143,7 +144,7 @@ class AgentFromPolicy(Agent):
             # todo handle M
             if self.is_recurrent:
                 # print("AGENT RECURRENT: ACTION")
-                # print(extra_feed)
+                # print(extra_feed) # contains {'done': True/False} only
                 state_act, self.states = self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs, S=self.states, **extra_feed)
             else:
                 state_act, model_states = self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs)

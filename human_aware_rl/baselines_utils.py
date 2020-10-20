@@ -254,8 +254,8 @@ def get_pbt_agent_from_config(save_dir, sim_threads, seed, agent_idx=0, best=Fal
 def get_agent_from_saved_model(save_dir, sim_threads):
     """Get Agent corresponding to a saved model"""
     # NOTE: Could remove dependency on sim_threads if get the sim_threads from config or dummy env
-    state_policy, processed_obs_policy = get_model_policy_from_saved_model(save_dir, sim_threads)
-    return AgentFromPolicy(state_policy, processed_obs_policy)
+    state_policy, processed_obs_policy, is_recurrent = get_model_policy_from_saved_model(save_dir, sim_threads)
+    return AgentFromPolicy(state_policy, processed_obs_policy, is_recurrent=is_recurrent)
 
 
 def get_agent_from_model(model, sim_threads, is_joint_action=False, is_recurrent=False):
@@ -267,12 +267,14 @@ def get_agent_from_model(model, sim_threads, is_joint_action=False, is_recurrent
 def get_model_policy_from_saved_model(save_dir, sim_threads):
     """Get a policy function from a saved model"""
     predictor = tf.contrib.predictor.from_saved_model(save_dir)
-    if len(predictor._feed_tensors > 1):
+    is_recurrent = len(predictor._feed_tensors > 1)
+    if is_recurrent:
         # recurrent init State tensor
         def step_fn(obs, **extra_feed):
             extra_feed['obs'] = obs
             if 'S' in extra_feed and extra_feed['S'] is None:
                 #init S tensor
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ init S for saved model ^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 extra_feed['S'] = np.zeros(predictor._feed_tensors['S'].shape.as_list())
             pred_rtn = predictor(extra_feed)
             action_probs = pred_rtn["action_probs"]
@@ -281,7 +283,7 @@ def get_model_policy_from_saved_model(save_dir, sim_threads):
     else:
         def step_fn(obs, **extra_feed):
             return predictor({"obs": obs})["action_probs"], None
-    return get_model_policy(step_fn, sim_threads)
+    return get_model_policy(step_fn, sim_threads), is_recurrent
 
 
 # def get_model_policy_from_model(model, sim_threads, is_joint_action=False):
