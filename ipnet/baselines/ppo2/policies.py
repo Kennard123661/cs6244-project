@@ -2,7 +2,7 @@ import tensorflow as tf
 from baselines.common import tf_util
 from baselines.a2c.utils import fc
 from baselines.common.distributions import make_pdtype
-from baselines.common.input import observation_placeholder, encode_observation
+from ipnet.baselines.ppo2.input import observation_placeholder, encode_observation
 from baselines.common.tf_util import adjust_shape
 from baselines.common.mpi_running_mean_std import RunningMeanStd
 from baselines.common.models import get_network_builder
@@ -66,7 +66,7 @@ class PolicyWithValue(object):
             self.vf = self.q
         else:
             self.vf = fc(vf_latent, 'vf', 1)
-            self.vf = self.vf[:,0]
+            self.vf = self.vf[:, 0]
         self.vf = tf.identity(self.vf, name="value")
 
     def _evaluate(self, variables, observation, **extra_feed):
@@ -129,7 +129,8 @@ class PolicyWithValue(object):
         tf_util.load_state(load_path, sess=self.sess)
 
 
-def build_policy(env, policy_network, value_network=None,  normalize_observations=False, estimate_q=False, **policy_kwargs):
+def build_policy(env, policy_network, input_seq_length: int,
+                 value_network=None,  normalize_observations=False, estimate_q=False, **policy_kwargs):
     if isinstance(policy_network, str):
         network_type = policy_network
         policy_network = get_network_builder(network_type)(**policy_kwargs)
@@ -137,30 +138,33 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
     def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None):
         ob_space = env.observation_space
 
-        X = observ_placeholder if observ_placeholder is not None \
-            else observation_placeholder(ob_space, batch_size=nbatch)
+        x = observ_placeholder if observ_placeholder is not None \
+            else observation_placeholder(ob_space, history_len=input_seq_length, batch_size=nbatch)
 
         extra_tensors = {}
-
-        if normalize_observations and X.dtype == tf.float32:
-            encoded_x, rms = _normalize_clip_observation(X)
+        batchsize, sequence_len, h, w, d = x.shape
+        x = tf.reshape(x, shape=[batchsize * sequence_len, h, w, d])
+        if normalize_observations and x.dtype == tf.float32:
+            encoded_x, rms = _normalize_clip_observation(x)
             extra_tensors['rms'] = rms
         else:
-            encoded_x = X
-
+            encoded_x = x
+        encoded_x = tf.reshape(encoded_x, shape=[batchsize, sequence_len, h, w, d])
         encoded_x = encode_observation(ob_space, encoded_x)
 
         with tf.variable_scope('pi', reuse=tf.AUTO_REUSE):
             policy_latent = policy_network(encoded_x)
-            if isinstance(policy_latent, tuple):
-                policy_latent, recurrent_tensors = policy_latent
-
-                if recurrent_tensors is not None:
-                    # recurrent architecture, need a few more steps
-                    nenv = nbatch // nsteps
-                    assert nenv > 0, 'Bad input for recurrent policy: batch size {} smaller than nsteps {}'.format(nbatch, nsteps)
-                    policy_latent, recurrent_tensors = policy_network(encoded_x, nenv)
-                    extra_tensors.update(recurrent_tensors)
+            assert not isinstance(policy_latent, tuple)
+            # todo: uncomment code for recurrent architectures.
+            # if isinstance(policy_latent, tuple):
+            #     policy_latent, recurrent_tensors = policy_latent
+            #
+            #     if recurrent_tensors is not None:
+            #         recurrent architecture, need a few more steps
+                    # nenv = nbatch // nsteps
+                    # assert nenv > 0, 'Bad input for recurrent policy: batch size {} smaller than nsteps {}'.format(nbatch, nsteps)
+                    # policy_latent, recurrent_tensors = policy_network(encoded_x, nenv)
+                    # extra_tensors.update(recurrent_tensors)
 
         _v_net = value_network
         if _v_net is None or _v_net == 'shared':
@@ -177,7 +181,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
 
         policy = PolicyWithValue(
             env=env,
-            observations=X,
+            observations=x,
             latent=policy_latent,
             vf_latent=vf_latent,
             sess=sess,

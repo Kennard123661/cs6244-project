@@ -63,7 +63,8 @@ def my_config():
     SEEDS = [0]
 
     # Number of parallel environments used for simulating rollouts
-    sim_threads = 30 if not LOCAL_TESTING else 2
+    sim_threads = 2 if not LOCAL_TESTING else 2
+    # sim_threads = 30 if not LOCAL_TESTING else 2
 
     # Threshold for sparse reward before saving the best model
     SAVE_BEST_THRESH = 50

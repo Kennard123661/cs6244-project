@@ -49,6 +49,7 @@ def encode_observation(ob_space, placeholder):
     if isinstance(ob_space, Discrete):
         return tf.to_float(tf.one_hot(placeholder, ob_space.n))
     elif isinstance(ob_space, Box):
+        # the overcooked environment will use this.
         return tf.to_float(placeholder)
     elif isinstance(ob_space, MultiDiscrete):
         placeholder = tf.cast(placeholder, tf.int32)
