@@ -63,7 +63,9 @@ def my_config():
     SEEDS = [0]
 
     # Number of parallel environments used for simulating rollouts
-    sim_threads = 30 if not LOCAL_TESTING else 2
+    # sim_threads = 30 if not LOCAL_TESTING else 2
+    # TODO: uncomment top code
+    sim_threads = 2 if not LOCAL_TESTING else 2
 
     # Threshold for sparse reward before saving the best model
     SAVE_BEST_THRESH = 50
@@ -135,7 +137,10 @@ def my_config():
     ##################
 
     # Network type used
-    NETWORK_TYPE = "conv_and_mlp"
+    NETWORK_TYPE = 'conv_hypernetwork'
+
+    HISTORY = 10
+    NUM_HYPERNET_LAYERS = 2
 
     # Network params
     NUM_HIDDEN_LAYERS = 3
@@ -214,6 +219,9 @@ def my_config():
         "SIZE_HIDDEN_LAYERS": SIZE_HIDDEN_LAYERS,
         "NUM_FILTERS": NUM_FILTERS,
         "NUM_CONV_LAYERS": NUM_CONV_LAYERS,
+        "NUM_HYPERNET_LAYERS": NUM_HYPERNET_LAYERS,
+        "HISTORY": HISTORY,
+
         "NETWORK_TYPE": NETWORK_TYPE,
         "SAVE_BEST_THRESH": SAVE_BEST_THRESH,
         "TRAJECTORY_SELF_PLAY": TRAJECTORY_SELF_PLAY,

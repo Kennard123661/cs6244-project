@@ -2,6 +2,7 @@ import gym
 import time
 import numpy as np
 import tensorflow as tf
+from matplotlib.axes._base import _axis_method_wrapper
 
 from overcooked_ai_py.mdp.actions import Direction, Action
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
@@ -150,7 +151,7 @@ def conv_network_fn(**kwargs):
                 name="conv_{}".format(i)
             )
         out = tf.layers.flatten(conv_out)
-        assert out.shape == 2
+        assert len(out.shape) == 2, '{}'.format(out.shape)
         return out
 
     def hypernetwork_head(_inputs, out_shape: list):
@@ -202,7 +203,7 @@ def conv_network_fn(**kwargs):
         biases.append(bias)
         for _ in range(num_hidden_layers-1):
             weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
-            weight.append(weight)
+            weights.append(weight)
             biases.append(bias)
         return weights, biases
 
@@ -223,13 +224,16 @@ def conv_network_fn(**kwargs):
         assert len(_inputs.shape) == 4
 
         out = conv_fn(conv_in=_inputs)  # B x D
-        dims = out.shape[1]
+        out = tf.expand_dims(out, axis=1)  # B x 1 x D
+        dims = out.shape[2]  # D
         weights, biases = hypernetwork_generator(_inputs=_x, _policy_in_dims=dims)
 
         for i, weight in enumerate(weights):
             bias = biases[i]
+            bias = tf.expand_dims(bias, axis=1)  # B x 1 x D
             out = tf.matmul(out, weight) + bias
-            out = tf.nn.leaky_relu(out)
+            out = tf.nn.leaky_relu(out)  # B x 1 x D
+        out = tf.squeeze(out, axis=1)  # B x D
         return out
     return network_fn
 

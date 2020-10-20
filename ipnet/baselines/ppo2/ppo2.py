@@ -100,7 +100,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         assert callable(cliprange)
     total_timesteps = int(total_timesteps)
 
-    history_length = network_kwargs['HISTORY_LENGTH']
+    history_length = additional_params['HISTORY']
     policy = build_policy(env, network, history_length, **network_kwargs)
 
     bestrew = 0
