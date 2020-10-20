@@ -12,7 +12,7 @@ from overcooked_ai_py.utils import load_pickle, save_pickle, load_dict_from_file
 
 from human_aware_rl.utils import create_dir_if_not_exists, num_tf_params, get_max_iter
 
-from baselines.ppo2.ppo2 import learn
+from ipnet.baselines.ppo2.ppo2 import learn
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.models import register

@@ -33,7 +33,7 @@ class PolicyWithValue(object):
 
         """
 
-        self.X = observations
+        self.x = observations
         self.state = tf.constant([])
         self.initial_state = None
         self.__dict__.update(tensors)
@@ -71,7 +71,7 @@ class PolicyWithValue(object):
 
     def _evaluate(self, variables, observation, **extra_feed):
         sess = self.sess
-        feed_dict = {self.X: adjust_shape(self.X, observation)}
+        feed_dict = {self.x: adjust_shape(self.x, observation)}
         for inpt_name, data in extra_feed.items():
             if inpt_name in self.__dict__.keys():
                 inpt = self.__dict__[inpt_name]
@@ -96,6 +96,7 @@ class PolicyWithValue(object):
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
         # print(observation.shape)
+        assert len(observation.shape) == 5
         a, action_probs, v, state, neglogp = self._evaluate([self.action, self.action_probs,
                                                              self.vf, self.state, self.neglogp],
                                                             observation, **extra_feed)

@@ -1,5 +1,37 @@
 import numpy as np
-from baselines.common.runners import AbstractEnvRunner
+from abc import ABC, abstractmethod
+
+
+class AbstractEnvRunner(ABC):
+    def __init__(self, *, env, model, nsteps, input_sequence_length: int):
+        self.env = env
+        self.model = model
+        self.nenv = nenv = env.num_envs if hasattr(env, 'num_envs') else 1
+        self.batch_ob_shape = (nenv*nsteps,) + env.observation_space.shape
+        self.obs = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
+
+        overcooked = 'env_name' in env.__dict__.keys() and env.env_name == "Overcooked-v0"
+        if overcooked:
+            self.obs0 = np.zeros((nenv, input_sequence_length) + env.observation_space.shape,
+                                 dtype=env.observation_space.dtype.name)
+            self.obs1 = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
+
+            obs = env.reset()
+            both_obs = obs["both_agent_obs"]
+            self.obs0[:] = np.concatenate([both_obs[:, 0:1, :, :]] * input_sequence_length, axis=1)
+            self.obs1[:] = np.concatenate([both_obs[:, 1:2, :, :]] * input_sequence_length, axis=1)
+            self.curr_state = obs["overcooked_state"]
+            self.other_agent_idx = obs["other_agent_env_idx"]
+        else:
+            self.obs[:] = env.reset()
+            raise NotImplementedError
+        self.nsteps = nsteps
+        self.states = model.initial_state
+        self.dones = [False for _ in range(nenv)]
+
+    @abstractmethod
+    def run(self):
+        raise NotImplementedError
 
 
 class Runner(AbstractEnvRunner):
@@ -52,67 +84,64 @@ class Runner(AbstractEnvRunner):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             overcooked = 'env_name' in self.env.__dict__.keys() and self.env.env_name == "Overcooked-v0"
-            if overcooked:
-                actions, values, self.states, neglogpacs = self.model.step(self.obs0, S=self.states, M=self.dones)
+            assert overcooked
+            actions, values, self.states, neglogpacs = self.model.step(self.obs0, S=self.states, M=self.dones)
 
-                import time
-                current_simulation_time = time.time()
+            import time
+            current_simulation_time = time.time()
 
-                # Randomize at either the trajectory level or the individual timestep level
-                if self.env.trajectory_sp:
+            # Randomize at either the trajectory level or the individual timestep level
+            if self.env.trajectory_sp:
 
-                    # If there are environments selected to not run in SP, generate actions
-                    # for the other agent, otherwise we skip this step.
-                    if sum(sp_envs_bools) != num_envs:
-                        other_agent_actions_bc = other_agent_action()
+                # If there are environments selected to not run in SP, generate actions
+                # for the other agent, otherwise we skip this step.
+                if sum(sp_envs_bools) != num_envs:
+                    other_agent_actions_bc = other_agent_action()
 
-                    # If there are environments selected to run in SP, generate self-play actions
-                    if sum(sp_envs_bools) != 0:
-                        other_agent_actions_sp, _, _, _ = self.model.step(self.obs1, S=self.states, M=self.dones)
+                # If there are environments selected to run in SP, generate self-play actions
+                if sum(sp_envs_bools) != 0:
+                    other_agent_actions_sp, _, _, _ = self.model.step(self.obs1, S=self.states, M=self.dones)
 
-                    # Select other agent actions for each environment depending on whether it was selected
-                    # for self play or not
-                    other_agent_actions = []
-                    for i in range(num_envs):
-                        if sp_envs_bools[i]:
-                            sp_action = other_agent_actions_sp[i]
-                            other_agent_actions.append(sp_action)
-                        else:
-                            bc_action = other_agent_actions_bc[i]
-                            other_agent_actions.append(bc_action)
+                # Select other agent actions for each environment depending on whether it was selected
+                # for self play or not
+                other_agent_actions = []
+                for i in range(num_envs):
+                    if sp_envs_bools[i]:
+                        sp_action = other_agent_actions_sp[i]
+                        other_agent_actions.append(sp_action)
+                    else:
+                        bc_action = other_agent_actions_bc[i]
+                        other_agent_actions.append(bc_action)
 
-                else:
-                    other_agent_actions = np.zeros_like(self.curr_state)
-
-                    if self.env.self_play_randomization < 1:
-                        # Get actions through the action method of the agent
-                        other_agent_actions = other_agent_action()
-
-                    # Naive non-parallelized way of getting actions for other
-                    if self.env.self_play_randomization > 0:
-                        self_play_actions, _, _, _ = self.model.step(self.obs1, S=self.states, M=self.dones)
-                        self_play_bools = np.random.random(num_envs) < self.env.self_play_randomization
-
-                        for i in range(num_envs):
-                            is_self_play_action = self_play_bools[i]
-                            if is_self_play_action:
-                                other_agent_actions[i] = self_play_actions[i]
-
-                # NOTE: This has been discontinued as now using .other_agent_true takes about the same amount of time
-                # elif self.env.other_agent_bc:
-                #     # Parallelise actions with direct action, using the featurization function
-                #     featurized_states = [self.env.mdp.featurize_state(s, self.env.mlp) for s in self.curr_state]
-                #     player_featurizes_states = [s[idx] for s, idx in zip(featurized_states, self.other_agent_idx)]
-                #     other_agent_actions = self.env.other_agent.direct_policy(player_featurizes_states, sampled=True, no_wait=True)
-
-                other_agent_simulation_time += time.time() - current_simulation_time
-
-                joint_action = [(actions[i], other_agent_actions[i]) for i in range(len(actions))]
-
-                mb_obs.append(self.obs0.copy())
             else:
-                actions, values, self.states, neglogpacs = self.model.step(self.obs, S=self.states, M=self.dones)
-                mb_obs.append(self.obs.copy())
+                other_agent_actions = np.zeros_like(self.curr_state)
+
+                if self.env.self_play_randomization < 1:
+                    # Get actions through the action method of the agent
+                    other_agent_actions = other_agent_action()
+
+                # Naive non-parallelized way of getting actions for other
+                if self.env.self_play_randomization > 0:
+                    self_play_actions, _, _, _ = self.model.step(self.obs1, S=self.states, M=self.dones)
+                    self_play_bools = np.random.random(num_envs) < self.env.self_play_randomization
+
+                    for i in range(num_envs):
+                        is_self_play_action = self_play_bools[i]
+                        if is_self_play_action:
+                            other_agent_actions[i] = self_play_actions[i]
+
+            # NOTE: This has been discontinued as now using .other_agent_true takes about the same amount of time
+            # elif self.env.other_agent_bc:
+            #     # Parallelise actions with direct action, using the featurization function
+            #     featurized_states = [self.env.mdp.featurize_state(s, self.env.mlp) for s in self.curr_state]
+            #     player_featurizes_states = [s[idx] for s, idx in zip(featurized_states, self.other_agent_idx)]
+            #     other_agent_actions = self.env.other_agent.direct_policy(player_featurizes_states, sampled=True, no_wait=True)
+
+            other_agent_simulation_time += time.time() - current_simulation_time
+
+            joint_action = [(actions[i], other_agent_actions[i]) for i in range(len(actions))]
+
+            mb_obs.append(self.obs0[-1].copy())
 
             mb_actions.append(actions)
             mb_values.append(values)
@@ -123,13 +152,20 @@ class Runner(AbstractEnvRunner):
             # Infos contains a ton of useful informations
             if overcooked:
                 obs, rewards, self.dones, infos = self.env.step(joint_action)
+
+                # update the observations as a queue
                 both_obs = obs["both_agent_obs"]
-                self.obs0[:] = both_obs[:, 0, :, :]
-                self.obs1[:] = both_obs[:, 1, :, :]
+                self.obs0[:, :-1] = self.obs0[:, 1:]
+                self.obs0[:, -1] = both_obs[:, 0]
+
+                self.obs1[:, :-1] = self.obs1[:, 1:]
+                self.obs1[:, -1] = both_obs[:, 1]
+
                 self.curr_state = obs["overcooked_state"]
                 self.other_agent_idx = obs["other_agent_env_idx"]
             else:
                 self.obs[:], rewards, self.dones, infos = self.env.step(actions)
+                raise NotImplementedError('I dont think this part should be entered - Kennard')
 
             for info in infos:
                 maybeepinfo = info.get('episode')
@@ -177,9 +213,6 @@ def sf01(arr):
     swap and then flatten axes 0 and 1
     """
     s = arr.shape
-    print(s)
     out = arr.swapaxes(0, 1)
-    print(out.shape)
     out = out.reshape(s[0] * s[1], *s[2:])
-    print(out.shape)
     return out

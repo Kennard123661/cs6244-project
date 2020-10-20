@@ -4,7 +4,7 @@ import numpy as np
 import os.path as osp
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
-from baselines.common.policies import build_policy
+from ipnet.baselines.ppo2.policies import build_policy
 
 try:
     from mpi4py import MPI
@@ -100,7 +100,8 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         assert callable(cliprange)
     total_timesteps = int(total_timesteps)
 
-    policy = build_policy(env, network, **network_kwargs)
+    history_length = network_kwargs['HISTORY_LENGTH']
+    policy = build_policy(env, network, history_length, **network_kwargs)
 
     bestrew = 0
     # Get the nb of env
@@ -116,7 +117,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
     # Instantiate the model object (that creates act_model and train_model)
     if model_fn is None:
-        from baselines.ppo2.model import Model
+        from ipnet.baselines.ppo2.model import Model
         model_fn = Model
 
     model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,

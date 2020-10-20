@@ -9,11 +9,11 @@ from sacred.observers import FileStorageObserver
 from tensorflow.saved_model import simple_save
 from human_aware_rl.directory import CHECKPOINT_DIR
 
-PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ppo_runs' + os.path.sep)
+IPNET_PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ipnet_ppo_runs' + os.path.sep)
 # PPO_DATA_DIR = 'data/ppo_runs/'
 
 ex = Experiment('PPO')
-ex.observers.append(FileStorageObserver.create(PPO_DATA_DIR + 'ppo_exp'))
+ex.observers.append(FileStorageObserver.create(IPNET_PPO_DATA_DIR + 'ppo_exp'))
 
 from overcooked_ai_py.utils import load_pickle, save_pickle
 from overcooked_ai_py.agents.agent import RandomAgent, GreedyHumanModel, AgentPair
@@ -21,7 +21,7 @@ from overcooked_ai_py.planning.planners import NO_COUNTERS_PARAMS, MediumLevelPl
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 
-from human_aware_rl.baselines_utils import get_vectorized_gym_env, create_model, update_model, get_agent_from_saved_model
+from ipnet.utils import get_vectorized_gym_env, create_model, update_model, get_agent_from_saved_model
 from human_aware_rl.utils import create_dir_if_not_exists, reset_tf, delete_dir_if_exists, set_global_seed
 from human_aware_rl.imitation.behavioural_cloning import get_bc_agent_from_saved
 from human_aware_rl.experiments.bc_experiments import BEST_BC_MODELS_PATH
@@ -39,9 +39,9 @@ def my_config():
     EX_NAME = "undefined_name"
 
     if TIMESTAMP_DIR:
-        SAVE_DIR = PPO_DATA_DIR + time.strftime('%Y_%m_%d-%H_%M_%S_') + EX_NAME + "/"
+        SAVE_DIR = IPNET_PPO_DATA_DIR + time.strftime('%Y_%m_%d-%H_%M_%S_') + EX_NAME + "/"
     else:
-        SAVE_DIR = PPO_DATA_DIR + EX_NAME + "/"
+        SAVE_DIR = IPNET_PPO_DATA_DIR + EX_NAME + "/"
 
     print("Saving data to ", SAVE_DIR)
 
@@ -227,7 +227,7 @@ def save_ppo_model(model, save_folder):
     simple_save(
         tf.get_default_session(),
         save_folder,
-        inputs={"obs": model.act_model.X},
+        inputs={"obs": model.act_model.x},
         outputs={
             "action": model.act_model.action, 
             "value": model.act_model.vf,
@@ -277,7 +277,7 @@ def configure_other_agent(params, gym_env, mlp, mdp):
 
 
 def load_training_data(run_name, seeds=None):
-    run_dir = PPO_DATA_DIR + run_name + "/"
+    run_dir = IPNET_PPO_DATA_DIR + run_name + "/"
     config = load_pickle(run_dir + "config")
 
     # To add backwards compatibility
@@ -296,7 +296,7 @@ def load_training_data(run_name, seeds=None):
 
 
 def get_ppo_agent(save_dir, seed=0, best=False):
-    save_dir = PPO_DATA_DIR + save_dir + '/seed{}'.format(seed)
+    save_dir = IPNET_PPO_DATA_DIR + save_dir + '/seed{}'.format(seed)
     config = load_pickle(save_dir + '/config')
     if best:
         agent = get_agent_from_saved_model(save_dir + "/best", config["sim_threads"])

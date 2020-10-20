@@ -154,9 +154,10 @@ class Model(object):
 
         # Normalize the advantages
         advs = (advs - advs.mean()) / (advs.std() + 1e-8)
+        assert len(obs.shape) == 5, 'should be the form (B, T, H, W, D)'
 
         td_map = {
-            self.train_model.X: obs,
+            self.train_model.x: obs,
             self.A: actions,
             self.ADV: advs,
             self.R: returns,
