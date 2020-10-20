@@ -105,14 +105,14 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
     bestrew = 0
     # Get the nb of env
-    nenvs = env.num_envs
+    num_envs = env.num_envs
 
     # Get state_space and action_space
     ob_space = env.observation_space
     ac_space = env.action_space
 
     # Calculate the batch_size
-    nbatch = nenvs * nsteps
+    nbatch = num_envs * nsteps
     nbatch_train = nbatch // nminibatches
 
     # Instantiate the model object (that creates act_model and train_model)
@@ -120,7 +120,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         from ipnet.baselines.ppo2.model import Model
         model_fn = Model
 
-    model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
+    model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=num_envs, nbatch_train=nbatch_train,
                      nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
                      max_grad_norm=max_grad_norm, scope=scope)
 
@@ -179,37 +179,41 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         if eval_env is not None:
             eval_epinfobuf.extend(eval_epinfos)
 
-        # Here what we're going to do is for each minibatch calculate the loss and append it.
+        num_envs = runner.nenv
+        num_steps = runner.nsteps
+
+        # training for multiple epochs
         mblossvals = []
-        if states is None:  # nonrecurrent version
-            # Index of each element of batch_size
-            # Create the indices array
-            inds = np.arange(nbatch)
-            for _ in range(noptepochs):
-                # Randomize the indexes
-                np.random.shuffle(inds)
-                # 0 to batch_size with batch_train_size step
-                for start in tqdm.trange(0, nbatch, nbatch_train, desc="{}/{}".format(_, noptepochs)):
-                    end = start + nbatch_train
-                    mbinds = inds[start:end]
-                    slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
-                    mblossvals.append(model.train(lrnow, cliprangenow, *slices))
+        inds = np.arange(nbatch)
+        for _ in range(noptepochs):
+            # Randomize the indexes
+            np.random.shuffle(inds)
 
-        else:  # recurrent version
-            assert nenvs % nminibatches == 0
-            envsperbatch = nenvs // nminibatches
-            envinds = np.arange(nenvs)
-            flatinds = np.arange(nenvs * nsteps).reshape(nenvs, nsteps)
-            for _ in range(noptepochs):
-                np.random.shuffle(envinds)
-                for start in range(0, nenvs, envsperbatch):
-                    end = start + envsperbatch
-                    mbenvinds = envinds[start:end]
-                    mbflatinds = flatinds[mbenvinds].ravel()
-                    slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
-                    mbstates = states[mbenvinds]
-                    mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
+            # 0 to batch_size with batch_train_size step
+            for start in tqdm.trange(0, nbatch, nbatch_train, desc="{}/{}".format(_, noptepochs)):
+                end = start + nbatch_train
 
+                selected_idxs = inds[start:end]
+                end_idxs = selected_idxs + 1
+                start_idxs = end_idxs - history_length
+                trajectory_start_idxs = np.floor(selected_idxs / num_steps).astype(int) * num_steps
+
+                window_idxs = []
+                for i, start_idx in enumerate(start_idxs):
+                    end_idx = end_idxs[i]
+                    sample_window = np.arange(start_idx, end_idx)
+                    min_idx = trajectory_start_idxs[i]
+                    sample_window = np.clip(a=sample_window, a_min=min_idx, a_max=None).astype(int)
+                    assert len(sample_window) == history_length
+                    window_idxs.append(sample_window)
+                window_idxs = np.concatenate(window_idxs, axis=0)
+
+                batch_obs = obs[window_idxs]
+                _, h, w, d = batch_obs.shape
+                batch_obs = np.reshape(batch_obs, newshape=[nbatch_train, history_length, h, w, d])
+
+                slices = (arr[selected_idxs] for arr in (returns, masks, actions, values, neglogpacs))
+                mblossvals.append(model.train(lrnow, cliprangenow, batch_obs, *slices))
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
         # End timer

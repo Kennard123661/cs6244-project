@@ -137,6 +137,9 @@ class Model(object):
         self.value = act_model.value
         self.initial_state = act_model.initial_state
 
+        assert len(self.train_model.x.shape) == 5
+        assert len(self.act_model.x.shape) == 5
+
         self.save = functools.partial(save_variables, sess=sess)
         self.load = functools.partial(load_variables, sess=sess)
 
@@ -155,7 +158,6 @@ class Model(object):
         # Normalize the advantages
         advs = (advs - advs.mean()) / (advs.std() + 1e-8)
         assert len(obs.shape) == 5, 'should be the form (B, T, H, W, D)'
-
         td_map = {
             self.train_model.x: obs,
             self.A: actions,

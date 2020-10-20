@@ -9,7 +9,7 @@ class AbstractEnvRunner(ABC):
         self.model = model
         self.nenv = nenv = env.num_envs if hasattr(env, 'num_envs') else 1
         self.batch_ob_shape = (nenv*nsteps,) + env.observation_space.shape
-        self.obs = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
+        self.obs = np.zeros((nenv, input_sequence_length) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
 
         overcooked = 'env_name' in env.__dict__.keys() and env.env_name == "Overcooked-v0"
         if overcooked:

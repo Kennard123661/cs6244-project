@@ -141,15 +141,14 @@ def build_policy(env, policy_network, input_seq_length: int,
 
         x = observ_placeholder if observ_placeholder is not None \
             else observation_placeholder(ob_space, history_len=input_seq_length, batch_size=nbatch)
-
         extra_tensors = {}
         batchsize, sequence_len, h, w, d = x.shape
-        x = tf.reshape(x, shape=[batchsize * sequence_len, h, w, d])
-        if normalize_observations and x.dtype == tf.float32:
-            encoded_x, rms = _normalize_clip_observation(x)
+        out = tf.reshape(x, shape=[batchsize * sequence_len, h, w, d])
+        if normalize_observations and out.dtype == tf.float32:
+            encoded_x, rms = _normalize_clip_observation(out)
             extra_tensors['rms'] = rms
         else:
-            encoded_x = x
+            encoded_x = out
         encoded_x = tf.reshape(encoded_x, shape=[batchsize, sequence_len, h, w, d])
         encoded_x = encode_observation(ob_space, encoded_x)
 
