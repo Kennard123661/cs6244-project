@@ -158,7 +158,8 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()  # pylint: disable=E0632
         if eval_env is not None:
-            eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run()  # pylint: disable=E0632
+            # eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run()  # pylint: disable=E0632
+            raise NotImplementedError
 
         eplenmean = safemean([epinfo['ep_length'] for epinfo in epinfos])
         eprewmean = safemean([epinfo['r'] for epinfo in epinfos])
@@ -176,6 +177,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
         epinfobuf.extend(epinfos)
         if eval_env is not None:
+            raise NotImplementedError
             eval_epinfobuf.extend(eval_epinfos)
 
         num_envs = runner.nenv
@@ -209,6 +211,8 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
                 slices = (arr[selected_idxs] for arr in (returns, masks, actions, values, neglogpacs))
                 mblossvals.append(model.train(lrnow, cliprangenow, batch_obs, *slices))
+            # todo: remove the break below
+            break
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
         # End timer
@@ -351,35 +355,35 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
             print('i have entered 2')
             from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
             from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
-            from overcooked_ai_py.agents.agent import AgentPair
-            from overcooked_ai_py.agents.benchmarking import AgentEvaluator
-            from human_aware_rl.baselines_utils import get_agent_from_model
+            from ipnet.baselines.ppo2.agent import AgentPair
+            from ipnet.utils import get_agent_from_model
+
             print(additional_params["SAVE_DIR"])
             mdp = OvercookedGridworld.from_layout_name(**additional_params["mdp_params"])
             overcooked_env = OvercookedEnv(mdp, **additional_params["env_params"])
             agent = get_agent_from_model(model, additional_params["sim_threads"],
-                                         is_joint_action=(run_type == "joint_ppo"))
+                                         is_joint_action=(run_type == "joint_ppo"), history_length=history_length)
             agent.set_mdp(mdp)
 
             if run_type == "ppo":
                 if additional_params["OTHER_AGENT_TYPE"] == 'sp':
-                    agent_pair = AgentPair(agent, agent, allow_duplicate_agents=True)
+                    raise NotImplementedError
+                    # agent_pair = AgentPair(agent, agent, allow_duplicate_agents=True)
                 else:
-                    print("PPO agent on index 0:")
                     env.other_agent.set_mdp(mdp)
-                    agent_pair = AgentPair(agent, env.other_agent)
-                    trajectory, time_taken, tot_rewards, tot_shaped_rewards = overcooked_env.run_agents(agent_pair,
-                                                                                                        display=True,
-                                                                                                        display_until=100)
+                    agent_pair = AgentPair(agent, env.other_agent, is_ipnet_first=True)
+                    trajectory, time_taken, tot_rewards, tot_shaped_rewards = overcooked_env.run_agents(
+                        agent_pair, display=True, display_until=100)
                     overcooked_env.reset()
                     agent_pair.reset()
                     print("tot rew", tot_rewards, "tot rew shaped", tot_shaped_rewards)
 
                     print("PPO agent on index 1:")
-                    agent_pair = AgentPair(env.other_agent, agent)
+                    agent_pair = AgentPair(env.other_agent, agent, is_ipnet_first=False)
 
             else:
-                agent_pair = AgentPair(agent)
+                raise NotImplementedError
+                # agent_pair = AgentPair(agent)
             print('run agent pair')
             trajectory, time_taken, tot_rewards, tot_shaped_rewards = overcooked_env.run_agents(agent_pair,
                                                                                                 display=True,

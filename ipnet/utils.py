@@ -6,7 +6,7 @@ from overcooked_ai_py.mdp.actions import Direction, Action
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
 from overcooked_ai_py.mdp.layout_generator import LayoutGenerator
-from overcooked_ai_py.agents.agent import AgentFromPolicy, AgentPair
+from ipnet.baselines.ppo2.agent import AgentFromPolicy, AgentPair
 from overcooked_ai_py.utils import load_pickle, save_pickle, load_dict_from_file
 
 from human_aware_rl.utils import create_dir_if_not_exists, num_tf_params, get_max_iter
@@ -275,11 +275,11 @@ def get_agent_from_saved_model(save_dir, sim_threads):
     return AgentFromPolicy(state_policy, processed_obs_policy)
 
 
-def get_agent_from_model(model, sim_threads, is_joint_action=False):
+def get_agent_from_model(model, sim_threads, history_length: int, is_joint_action=False):
     """Get Agent corresponding to a loaded model"""
     state_policy, processed_obs_policy = get_model_policy_from_model(model, sim_threads,
                                                                      is_joint_action=is_joint_action)
-    return AgentFromPolicy(state_policy, processed_obs_policy)
+    return AgentFromPolicy(state_policy, processed_obs_policy, sequence_length=history_length)
 
 
 def get_model_policy_from_saved_model(save_dir, sim_threads):
@@ -321,7 +321,11 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
 
     def state_policy(mdp_state, mdp, agent_index, stochastic=True, return_action_probs=False):
         """Takes in a Overcooked state object and returns the corresponding action"""
-        obs = mdp.lossless_state_encoding(mdp_state)[agent_index]
+        if isinstance(mdp_state, list) or isinstance(mdp_state, np.ndarray):
+            obs = [mdp.lossless_state_encoding(state)[agent_index] for state in mdp_state]
+            obs = np.array(obs)
+        else:
+            obs = mdp.lossless_state_encoding(mdp_state)
         padded_obs = np.array([obs] + [np.zeros(obs.shape)] * (sim_threads - 1))
         action_probs = step_fn(padded_obs)[0]  # Discards all padding predictions
 
