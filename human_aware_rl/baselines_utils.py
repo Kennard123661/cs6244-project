@@ -254,8 +254,7 @@ def get_pbt_agent_from_config(save_dir, sim_threads, seed, agent_idx=0, best=Fal
 def get_agent_from_saved_model(save_dir, sim_threads):
     """Get Agent corresponding to a saved model"""
     # NOTE: Could remove dependency on sim_threads if get the sim_threads from config or dummy env
-    state_policy, processed_obs_policy = get_model_policy_from_saved_model(
-        save_dir, sim_threads)
+    state_policy, processed_obs_policy = get_model_policy_from_saved_model(save_dir, sim_threads)
     return AgentFromPolicy(state_policy, processed_obs_policy)
 
 
@@ -268,8 +267,20 @@ def get_agent_from_model(model, sim_threads, is_joint_action=False, is_recurrent
 def get_model_policy_from_saved_model(save_dir, sim_threads):
     """Get a policy function from a saved model"""
     predictor = tf.contrib.predictor.from_saved_model(save_dir)
-    def step_fn(obs, **extra_feed):
-        return predictor({"obs": obs})["action_probs"]
+    if len(predictor._feed_tensors > 1):
+        # recurrent init State tensor
+        def step_fn(obs, **extra_feed):
+            extra_feed['obs'] = obs
+            if 'S' in extra_feed and extra_feed['S'] is None:
+                #init S tensor
+                extra_feed['S'] = np.zeros(predictor._feed_tensors['S'].shape.as_list())
+            pred_rtn = predictor(extra_feed)
+            action_probs = pred_rtn["action_probs"]
+            state = pred_rtn["action_probs"]
+            return action_probs, state
+    else:
+        def step_fn(obs, **extra_feed):
+            return predictor({"obs": obs})["action_probs"], None
     return get_model_policy(step_fn, sim_threads)
 
 
@@ -284,7 +295,7 @@ def get_model_policy_from_model(model, sim_threads, is_joint_action=False):
         # baselines/baselines/ppo2/model.py/Model -> policies.py/PolicyWithValue.step
         # will handle the space of feed to fit place holder
         a, action_probs, v, state, neglogp = model.act_model.step(obs, return_full_eval=True, **extra_feed)
-        return a, action_probs, v, state, neglogp
+        return action_probs, state
     return get_model_policy(step_fn, sim_threads, is_joint_action=is_joint_action)
 
 def get_model_policy(step_fn, sim_threads, is_joint_action=False):
@@ -296,7 +307,7 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
     """
     def encoded_state_policy(observations, stochastic=True, return_action_probs=False, **extra_feed):
         """Takes in SIM_THREADS many losslessly encoded states and returns corresponding actions"""
-        a, action_probs_n, v, state, neglogp = step_fn(observations, **extra_feed)
+        action_probs_n, state = step_fn(observations, **extra_feed)
 
         if return_action_probs:
             return action_probs_n
@@ -325,7 +336,7 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
                 nxtfeed[k] = v
         # Discards all padding predictions
         # S: state from model steps, M: done from env step
-        a, action_probs, v, state, neglogp = step_fn(padded_obs, **nxtfeed)
+        action_probs, state = step_fn(padded_obs, **nxtfeed)
         action_probs = action_probs[0]
         if return_action_probs:
             return action_probs

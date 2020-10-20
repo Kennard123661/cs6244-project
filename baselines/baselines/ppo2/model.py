@@ -39,7 +39,7 @@ class Model(object):
                 # Technically same model since they share variables?
                 # act_model that is used for sampling
                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MODEL INIT: apply policy_fn 1 to get model for sampling %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-                act_model = policy(nbatch_act, 1, sess, name='act_model') #apply policy_fn to get PolicyWithValue
+                act_model = policy(nbatch_act, 1, sess, name='act_model') #apply policies/policy_fn to get PolicyWithValue
 
                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MODEL INIT: apply policy_fn 2 to get mode for training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
                 print(microbatch_size, nbatch_train, nsteps) #create_model: None, 80, 400

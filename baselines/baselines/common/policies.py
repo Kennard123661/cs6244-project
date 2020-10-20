@@ -34,7 +34,7 @@ class PolicyWithValue(object):
         """
 
         self.X = observations
-        self.state = tf.constant([])
+        self.state = tf.constant([], name="state")
         self.initial_state = None
         self.__dict__.update(tensors)
 
@@ -71,6 +71,9 @@ class PolicyWithValue(object):
         self.vf = tf.identity(self.vf, name="value")
         self.name = name
         self.counter = 0
+        if 'S' in tensors and 'M' in tensors:
+            self.S = tensors['S']
+            self.M = tensors['M']
 
     def _evaluate(self, variables, observation, **extra_feed):
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %s eval ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" % (self.name))
@@ -82,9 +85,10 @@ class PolicyWithValue(object):
                 if isinstance(inpt, tf.Tensor) and inpt._op.type == 'Placeholder':
                     # intialise S with initiate_state if key "S" exist but value None was given
                     if inpt_name == 'S' and data is None:
-                        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bottom in_eval ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                        print("############################################# S is NONE #############################################")
                         print(inpt_name, data, self.initial_state.shape)
-                        # print(self.initial_state)
+                        print(self.initial_state)
+                        print(type(observation))
                         data = self.initial_state
                     feed_dict[inpt] = adjust_shape(inpt, data) # key is placeholder, value is the actual reshaped to fit the placeholder
         return sess.run(variables, feed_dict)
@@ -105,7 +109,6 @@ class PolicyWithValue(object):
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %s Step %d ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" % (self.name, self.counter))
-
         self.counter += 1
         a, action_probs, v, state, neglogp = self._evaluate([self.action, self.action_probs, self.vf, self.state, self.neglogp], observation, **extra_feed)
         if return_action_probs:

@@ -1,6 +1,9 @@
+import os
+# surpress warning
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import gym
 import time
-import os
 import seaborn
 import numpy as np
 import tensorflow as tf
@@ -73,7 +76,7 @@ def my_config():
     SAVE_BEST_THRESH = 50
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
-    VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
+    VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 3
 
     ##############
     # PPO PARAMS #
@@ -228,18 +231,35 @@ def my_config():
     }
 
 
-def save_ppo_model(model, save_folder):
+def save_ppo_model(model, save_folder, is_recurrent=False):
     delete_dir_if_exists(save_folder, verbose=True)
-    simple_save(
-        tf.get_default_session(),
-        save_folder,
-        inputs={"obs": model.act_model.X},
-        outputs={
-            "action": model.act_model.action,
-            "value": model.act_model.vf,
-            "action_probs": model.act_model.action_probs
-        }
-    )
+    if all(k in model.act_model.__dict__ for k in ['S', 'M']):
+        print("SAVING RECURRENT")
+        simple_save(
+            tf.get_default_session(),
+            save_folder,
+            inputs={"obs": model.act_model.X, #policies.py/PolicyWithValue
+                    "S": model.act_model.S,
+                    "M": model.act_model.M
+            },
+            outputs={
+                "action": model.act_model.action,
+                "value": model.act_model.vf,
+                "action_probs": model.act_model.action_probs,
+                "state": model.act_model.state
+            }
+        )
+    else:
+        simple_save(
+            tf.get_default_session(),
+            save_folder,
+            inputs={"obs": model.act_model.X},
+            outputs={
+                "action": model.act_model.action,
+                "value": model.act_model.vf,
+                "action_probs": model.act_model.action_probs
+            }
+        )
 
 
 def configure_other_agent(params, gym_env, mlp, mdp):
@@ -405,9 +425,9 @@ def ppo_run(params):
 
         # Train model
         params["CURR_SEED"] = seed
-        print('*********************************************', model)
 
         train_info = update_model(gym_env, model, **params)
+        print("END OF UPDATE IN PPO.py")
 
         # Save model
         save_ppo_model(model, curr_seed_dir + model.agent_name)

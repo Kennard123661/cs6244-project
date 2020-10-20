@@ -142,7 +142,7 @@ class AgentFromPolicy(Agent):
         try:
             # todo handle M
             if self.is_recurrent:
-                print("AGENT RECURRENT: ACTION")
+                # print("AGENT RECURRENT: ACTION")
                 # print(extra_feed)
                 state_act, self.states = self.state_policy(state, self.mdp, self.agent_index, self.stochastic, self.action_probs, S=self.states, **extra_feed)
             else:
@@ -162,6 +162,7 @@ class AgentFromPolicy(Agent):
 
     def reset(self):
         self.history = []
+        self.states = None
 
 
 class RandomAgent(Agent):
