@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 from abc import ABC, abstractmethod
 
 
@@ -14,12 +15,14 @@ class AbstractEnvRunner(ABC):
         if overcooked:
             self.obs0 = np.zeros((nenv, input_sequence_length) + env.observation_space.shape,
                                  dtype=env.observation_space.dtype.name)
-            self.obs1 = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
+            self.obs1 = np.zeros((nenv, input_sequence_length)  + env.observation_space.shape,
+                                 dtype=env.observation_space.dtype.name)
 
             obs = env.reset()
             both_obs = obs["both_agent_obs"]
-            self.obs0[:] = np.concatenate([both_obs[:, 0:1, :, :]] * input_sequence_length, axis=1)
-            self.obs1[:] = np.concatenate([both_obs[:, 1:2, :, :]] * input_sequence_length, axis=1)
+            self.obs0[:] = np.stack([both_obs[:, 0, :, :]] * input_sequence_length, axis=1)
+            self.obs1[:] = np.stack([both_obs[:, 1, :, :]] * input_sequence_length, axis=1)
+
             self.curr_state = obs["overcooked_state"]
             self.other_agent_idx = obs["other_agent_env_idx"]
         else:
@@ -44,8 +47,9 @@ class Runner(AbstractEnvRunner):
     - Make a mini batch
     """
 
-    def __init__(self, *, env, model, nsteps, gamma, lam):
-        super().__init__(env=env, model=model, nsteps=nsteps)
+    def __init__(self, *, env, model, nsteps, gamma, lam, input_sequence_len: int):
+        super().__init__(env=env, model=model, nsteps=nsteps,
+                         input_sequence_length=input_sequence_len)
         # Lambda used in GAE (General Advantage Estimation)
         self.lam = lam
         # Discount rate

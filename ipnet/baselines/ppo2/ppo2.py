@@ -127,9 +127,11 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
     if load_path is not None:
         model.load(load_path)
     # Instantiate the runner object
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam,
+                    input_sequence_len=history_length)
     if eval_env is not None:
         eval_runner = Runner(env=eval_env, model=model, nsteps=nsteps, gamma=gamma, lam=lam)
+        raise NotImplementedError
 
     epinfobuf = deque(maxlen=100)
     if eval_env is not None:
