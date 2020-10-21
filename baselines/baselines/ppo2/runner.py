@@ -21,7 +21,6 @@ class Runner(AbstractEnvRunner):
         # Here, we init the lists that will contain the mb of experiences
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[],[]
         mb_states = self.states
-        print(type(mb_states))
         epinfos = []
         # For n in range number of steps
 
@@ -171,9 +170,6 @@ def sf01(arr):
     swap and then flatten axes 0 and 1
     """
     s = arr.shape
-    print(s)
     out = arr.swapaxes(0, 1)
-    print(out.shape)
     out = out.reshape(s[0] * s[1], *s[2:])
-    print(out.shape)
     return out
