@@ -25,7 +25,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
           lr=3e-4, vf_coef=0.5, max_grad_norm=0.5, gamma=0.99, lam=0.95, log_interval=10,
           nminibatches=4, noptepochs=4, cliprange=0.2,
           save_interval=0, load_path=None, model_fn=None, scope='', **network_kwargs):
-    '''
+    """
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
 
     Parameters:
@@ -78,7 +78,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
 
 
-    '''
+    """
     # todo: remove the line below once done.
     log_interval = 1
 
@@ -215,7 +215,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
                 slices = (arr[selected_idxs] for arr in (returns, masks, actions, values, neglogpacs))
                 mblossvals.append(model.train(lrnow, cliprangenow, batch_obs, *slices))
             # todo: remove the break below
-            break
+            # break
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
         # End timer
@@ -398,7 +398,6 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
             agent_pair.reset()
             print("tot rew", tot_rewards, "tot rew shaped", tot_shaped_rewards)
             print(additional_params["SAVE_DIR"])
-            break
 
     if nupdates > 0 and early_stopping:
         checkdir = osp.join(logger.get_dir(), 'checkpoints')

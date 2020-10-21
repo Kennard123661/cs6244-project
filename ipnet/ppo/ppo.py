@@ -68,9 +68,9 @@ def my_config():
     # sim_threads = 2 if not LOCAL_TESTING else 2
 
     # Threshold for sparse reward before saving the best model
-    # SAVE_BEST_THRESH = 50
+    SAVE_BEST_THRESH = 50
     # todo: set the best threshold to the above
-    SAVE_BEST_THRESH = 0
+    # SAVE_BEST_THRESH = 0
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
     # VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
