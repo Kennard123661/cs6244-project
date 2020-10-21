@@ -268,11 +268,11 @@ def get_pbt_agent_from_config(save_dir, sim_threads, seed, agent_idx=0, best=Fal
     return agent
 
 
-def get_agent_from_saved_model(save_dir, sim_threads):
+def get_agent_from_saved_model(save_dir, sim_threads, sequence_length: int):
     """Get Agent corresponding to a saved model"""
     # NOTE: Could remove dependency on sim_threads if get the sim_threads from config or dummy env
     state_policy, processed_obs_policy = get_model_policy_from_saved_model(save_dir, sim_threads)
-    return AgentFromPolicy(state_policy, processed_obs_policy)
+    return AgentFromPolicy(state_policy, processed_obs_policy, sequence_length=sequence_length)
 
 
 def get_agent_from_model(model, sim_threads, history_length: int, is_joint_action=False):

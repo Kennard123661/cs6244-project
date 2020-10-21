@@ -79,6 +79,9 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
 
     '''
+    # todo: remove the line below once done.
+    log_interval = 1
+
     additional_params = network_kwargs["network_kwargs"]
     from baselines import logger
 
@@ -292,17 +295,20 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
                 # Save/overwrite best model if past a certain threshold
                 if ep_sparse_rew_mean > bestrew and ep_sparse_rew_mean > additional_params["SAVE_BEST_THRESH"]:
                     # Don't save best model if still doing some self play and it's supposed to be a BC model
-                    if additional_params["OTHER_AGENT_TYPE"][
-                       :2] == "bc" and sp_horizon != 0 and env.self_play_randomization > 0:
-                        pass
-                    else:
-                        from human_aware_rl.ppo.ppo import save_ppo_model
-                        print("BEST REW", ep_sparse_rew_mean, "overwriting previous model with", bestrew)
-                        save_ppo_model(model, "{}seed{}/best".format(
-                            additional_params["SAVE_DIR"],
-                            additional_params["CURR_SEED"])
-                                       )
-                        bestrew = max(ep_sparse_rew_mean, bestrew)
+                    # if additional_params["OTHER_AGENT_TYPE"][:2] == "bc" \
+                    #         and sp_horizon != 0 and env.self_play_randomization > 0:
+                    #     print('hhere')
+                    #     pass
+                    # else:
+                    # TODO: i hacked this out to just save teh best model
+                    print('there')
+                    from ipnet.ppo.ppo import save_ppo_model
+                    print("BEST REW", ep_sparse_rew_mean, "overwriting previous model with", bestrew)
+                    save_ppo_model(model, "{}seed{}/best".format(
+                        additional_params["SAVE_DIR"],
+                        additional_params["CURR_SEED"])
+                                   )
+                    bestrew = max(ep_sparse_rew_mean, bestrew)
 
                 # If not sp run, and horizon is not None,
                 # vary amount of self play over time, either with a sigmoidal feedback loop

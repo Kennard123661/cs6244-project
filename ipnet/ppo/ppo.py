@@ -68,7 +68,9 @@ def my_config():
     # sim_threads = 2 if not LOCAL_TESTING else 2
 
     # Threshold for sparse reward before saving the best model
-    SAVE_BEST_THRESH = 50
+    # SAVE_BEST_THRESH = 50
+    # todo: set the best threshold to the above
+    SAVE_BEST_THRESH = 0
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
     # VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
@@ -303,13 +305,15 @@ def load_training_data(run_name, seeds=None):
     return train_infos, config
 
 
-def get_ppo_agent(save_dir, seed=0, best=False):
+def get_ppo_agent(save_dir, sequence_length, seed=0, best=False):
     save_dir = IPNET_PPO_DATA_DIR + save_dir + '/seed{}'.format(seed)
     config = load_pickle(save_dir + '/config')
     if best:
-        agent = get_agent_from_saved_model(save_dir + "/best", config["sim_threads"])
+        agent = get_agent_from_saved_model(save_dir + "/best", config["sim_threads"],
+                                           sequence_length=sequence_length)
     else:
-        agent = get_agent_from_saved_model(save_dir + "/ppo_agent", config["sim_threads"])
+        agent = get_agent_from_saved_model(save_dir + "/ppo_agent", config["sim_threads"],
+                                           sequence_length=sequence_length)
     return agent, config
 
 
