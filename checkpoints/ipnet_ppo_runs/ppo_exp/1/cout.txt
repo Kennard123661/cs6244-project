@@ -1,0 +1,168 @@
+INFO - PPO - Running command 'ppo_run'
+INFO - PPO - Started run with ID "1"
+Creating env with params {'RUN_TYPE': 'ppo', 'SEEDS': [9456, 1887, 5578, 5987, 516], 'LOCAL_TESTING': False, 'EX_NAME': 'ppo_bc_train_simple', 'SAVE_DIR': '/home/faust/git/cs6244-project/checkpoints/ipnet_ppo_runs/ppo_bc_train_simple/', 'GPU_ID': 0, 'PPO_RUN_TOT_TIMESTEPS': 8000000.0, 'mdp_params': {'layout_name': 'simple', 'start_order_list': None, 'rew_shaping_params': {'PLACEMENT_IN_POT_REW': 3, 'DISH_PICKUP_REWARD': 3, 'SOUP_PICKUP_REWARD': 5, 'DISH_DISP_DISTANCE_REW': 0, 'POT_DISTANCE_REW': 0, 'SOUP_DISTANCE_REW': 0}}, 'env_params': {'horizon': 400}, 'mdp_generation_params': {'padded_mdp_shape': [11, 7], 'mdp_shape_fn': [[5, 11], [5, 7]], 'prop_empty_fn': [0.6, 1], 'prop_feats_fn': [0, 0.6]}, 'ENTROPY': 0.1, 'GAMMA': 0.99, 'sim_threads': 30, 'TOTAL_BATCH_SIZE': 12000, 'BATCH_SIZE': 400, 'MAX_GRAD_NORM': 0.1, 'LR': 0.001, 'LR_ANNEALING': 3, 'VF_COEF': 0.5, 'STEPS_PER_UPDATE': 8, 'MINIBATCHES': 10, 'CLIPPING': 0.05, 'LAM': 0.98, 'SELF_PLAY_HORIZON': [500000.0, 3000000.0], 'REW_SHAPING_HORIZON': 1000000.0, 'OTHER_AGENT_TYPE': 'bc_train', 'HM_PARAMS': [True, 0.3], 'NUM_HIDDEN_LAYERS': 3, 'SIZE_HIDDEN_LAYERS': 64, 'NUM_FILTERS': 25, 'NUM_CONV_LAYERS': 3, 'NUM_HYPERNET_LAYERS': 2, 'HISTORY': 10, 'NETWORK_TYPE': 'conv_hypernetwork', 'SAVE_BEST_THRESH': 50, 'TRAJECTORY_SELF_PLAY': True, 'VIZ_FREQUENCY': 1, 'grad_updates_per_agent': 53280.0}
+Computing MediumLevelPlanner to be saved in /home/faust/git/cs6244-project/overcooked_ai/overcooked_ai_py/data/planners/simple_am.pkl
+It took 0.1087183952331543 seconds to create mlp
+Invalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyInvalid MIT-MAGIC-COOKIE-1 keyLOADING BC MODEL FROM: simple_bc_train_seed3
+Loading a model without an environment, this model cannot be trained until it has a valid environment.
+WARNING:tensorflow:From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+WARNING - tensorflow - From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+WARNING:tensorflow:From /home/faust/git/cs6244-project/stable-baselines/stable_baselines/common/policies.py:436: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+WARNING - tensorflow - From /home/faust/git/cs6244-project/stable-baselines/stable_baselines/common/policies.py:436: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+WARNING:tensorflow:From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/ops/math_ops.py:3066: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING - tensorflow - From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/ops/math_ops.py:3066: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:102: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+WARNING - tensorflow - From /home/faust/miniconda3/envs/cs6244/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:102: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+Mlp with different params or mdp found, computing from scratch
+Computing MediumLevelPlanner to be saved in /home/faust/git/cs6244-project/overcooked_ai/overcooked_ai_py/data/planners/simple_am.pkl
+It took 0.10759592056274414 seconds to create mlp
+WARNING:tensorflow:From /home/faust/git/cs6244-project/ipnet/baselines/ppo2/input.py:53: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING - tensorflow - From /home/faust/git/cs6244-project/ipnet/baselines/ppo2/input.py:53: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/faust/git/cs6244-project/ipnet/utils.py:138: conv2d (from tensorflow.python.layers.convolutional) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.conv2d instead.
+WARNING - tensorflow - From /home/faust/git/cs6244-project/ipnet/utils.py:138: conv2d (from tensorflow.python.layers.convolutional) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.conv2d instead.
+WARNING:tensorflow:From /home/faust/git/cs6244-project/ipnet/utils.py:174: dense (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.dense instead.
+WARNING - tensorflow - From /home/faust/git/cs6244-project/ipnet/utils.py:174: dense (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.dense instead.
+TOT NUM UPDATES 0
+TOT NUM UPDATES 666
+SP envs: 30/30
+running simulation to get timesteps
+
+  0%|          | 0/400 [00:00<?, ?it/s]
+  1%|          | 3/400 [00:00<00:16, 24.79it/s]
+  2%|▏         | 6/400 [00:00<00:15, 25.62it/s]
+  2%|▏         | 9/400 [00:00<00:14, 26.51it/s]
+  3%|▎         | 13/400 [00:00<00:14, 27.54it/s]
+  4%|▍         | 17/400 [00:00<00:13, 28.76it/s]
+  5%|▌         | 21/400 [00:00<00:12, 29.29it/s]
+  6%|▋         | 25/400 [00:00<00:12, 29.73it/s]
+  7%|▋         | 29/400 [00:00<00:12, 29.96it/s]
+  8%|▊         | 33/400 [00:01<00:12, 30.24it/s]
+  9%|▉         | 37/400 [00:01<00:11, 30.40it/s]
+ 10%|█         | 41/400 [00:01<00:11, 30.31it/s]
+ 11%|█▏        | 45/400 [00:01<00:11, 30.40it/s]
+ 12%|█▏        | 49/400 [00:01<00:11, 30.77it/s]
+ 13%|█▎        | 53/400 [00:01<00:11, 30.80it/s]
+ 14%|█▍        | 57/400 [00:01<00:11, 30.71it/s]
+ 15%|█▌        | 61/400 [00:02<00:10, 31.51it/s]
+ 16%|█▋        | 65/400 [00:02<00:10, 31.57it/s]
+ 17%|█▋        | 69/400 [00:02<00:10, 31.48it/s]
+ 18%|█▊        | 73/400 [00:02<00:10, 31.26it/s]
+ 19%|█▉        | 77/400 [00:02<00:10, 31.33it/s]
+ 20%|██        | 81/400 [00:02<00:10, 30.96it/s]
+ 21%|██▏       | 85/400 [00:02<00:10, 30.93it/s]
+ 22%|██▏       | 89/400 [00:02<00:09, 31.39it/s]
+ 23%|██▎       | 93/400 [00:03<00:09, 31.22it/s]
+ 24%|██▍       | 97/400 [00:03<00:09, 30.87it/s]
+ 25%|██▌       | 101/400 [00:03<00:09, 30.93it/s]
+ 26%|██▋       | 105/400 [00:03<00:09, 30.79it/s]
+ 27%|██▋       | 109/400 [00:03<00:09, 30.64it/s]
+ 28%|██▊       | 113/400 [00:03<00:09, 30.53it/s]
+ 29%|██▉       | 117/400 [00:03<00:09, 30.84it/s]
+ 30%|███       | 121/400 [00:03<00:09, 30.75it/s]
+ 31%|███▏      | 125/400 [00:04<00:08, 30.70it/s]
+ 32%|███▏      | 129/400 [00:04<00:08, 30.54it/s]
+ 33%|███▎      | 133/400 [00:04<00:08, 30.48it/s]
+ 34%|███▍      | 137/400 [00:04<00:08, 30.82it/s]
+ 35%|███▌      | 141/400 [00:04<00:08, 30.63it/s]
+ 36%|███▋      | 145/400 [00:04<00:08, 30.48it/s]
+ 37%|███▋      | 149/400 [00:04<00:08, 30.56it/s]
+ 38%|███▊      | 153/400 [00:05<00:08, 30.36it/s]
+ 39%|███▉      | 157/400 [00:05<00:07, 30.55it/s]
+ 40%|████      | 161/400 [00:05<00:07, 30.39it/s]
+ 41%|████▏     | 165/400 [00:05<00:07, 31.37it/s]
+ 42%|████▏     | 169/400 [00:05<00:07, 31.24it/s]
+ 43%|████▎     | 173/400 [00:05<00:07, 30.71it/s]
+ 44%|████▍     | 177/400 [00:05<00:07, 30.12it/s]
+ 45%|████▌     | 181/400 [00:05<00:07, 30.29it/s]
+ 46%|████▋     | 185/400 [00:06<00:07, 30.49it/s]
+ 47%|████▋     | 189/400 [00:06<00:06, 30.48it/s]
+ 48%|████▊     | 193/400 [00:06<00:06, 30.47it/s]
+ 49%|████▉     | 197/400 [00:06<00:06, 30.73it/s]
+ 50%|█████     | 201/400 [00:06<00:06, 30.57it/s]
+ 51%|█████▏    | 205/400 [00:06<00:06, 30.58it/s]
+ 52%|█████▏    | 209/400 [00:06<00:06, 30.17it/s]
+ 53%|█████▎    | 213/400 [00:06<00:06, 30.37it/s]
+ 54%|█████▍    | 217/400 [00:07<00:05, 30.54it/s]
+ 55%|█████▌    | 221/400 [00:07<00:05, 30.95it/s]
+ 56%|█████▋    | 225/400 [00:07<00:05, 30.75it/s]
+ 57%|█████▋    | 229/400 [00:07<00:05, 30.47it/s]
+ 58%|█████▊    | 233/400 [00:07<00:05, 30.28it/s]
+ 59%|█████▉    | 237/400 [00:07<00:05, 30.64it/s]
+ 60%|██████    | 241/400 [00:07<00:05, 30.43it/s]
+ 61%|██████▏   | 245/400 [00:08<00:05, 30.22it/s]
+ 62%|██████▏   | 249/400 [00:08<00:04, 30.49it/s]
+ 63%|██████▎   | 253/400 [00:08<00:04, 30.64it/s]
+ 64%|██████▍   | 257/400 [00:08<00:04, 30.85it/s]
+ 65%|██████▌   | 261/400 [00:08<00:04, 30.33it/s]
+ 66%|██████▋   | 265/400 [00:08<00:04, 30.05it/s]
+ 67%|██████▋   | 269/400 [00:08<00:04, 30.21it/s]
+ 68%|██████▊   | 273/400 [00:08<00:04, 30.58it/s]
+ 69%|██████▉   | 277/400 [00:09<00:04, 30.20it/s]
+ 70%|███████   | 281/400 [00:09<00:03, 30.06it/s]
+ 71%|███████▏  | 285/400 [00:09<00:03, 30.26it/s]
+ 72%|███████▏  | 289/400 [00:09<00:03, 30.40it/s]
+ 73%|███████▎  | 293/400 [00:09<00:03, 30.70it/s]
+ 74%|███████▍  | 297/400 [00:09<00:03, 30.78it/s]
+ 75%|███████▌  | 301/400 [00:09<00:03, 30.52it/s]
+ 76%|███████▋  | 305/400 [00:09<00:03, 30.12it/s]
+ 77%|███████▋  | 309/400 [00:10<00:02, 30.70it/s]
+ 78%|███████▊  | 313/400 [00:10<00:02, 31.64it/s]
+ 79%|███████▉  | 317/400 [00:10<00:02, 32.36it/s]
+ 80%|████████  | 321/400 [00:10<00:02, 32.89it/s]
+ 81%|████████▏ | 325/400 [00:10<00:02, 31.77it/s]
+ 82%|████████▏ | 329/400 [00:10<00:02, 30.78it/s]
+ 83%|████████▎ | 333/400 [00:10<00:02, 30.55it/s]
+ 84%|████████▍ | 337/400 [00:11<00:02, 29.83it/s]
+ 85%|████████▌ | 340/400 [00:11<00:02, 29.51it/s]
+ 86%|████████▌ | 343/400 [00:11<00:01, 29.51it/s]
+ 86%|████████▋ | 346/400 [00:11<00:01, 29.29it/s]
+ 87%|████████▋ | 349/400 [00:11<00:01, 29.18it/s]
+ 88%|████████▊ | 352/400 [00:11<00:01, 28.93it/s]
+ 89%|████████▉ | 356/400 [00:11<00:01, 29.21it/s]
+ 90%|████████▉ | 359/400 [00:11<00:01, 28.69it/s]
+ 90%|█████████ | 362/400 [00:11<00:01, 28.51it/s]
+ 92%|█████████▏| 366/400 [00:12<00:01, 29.15it/s]
+ 92%|█████████▎| 370/400 [00:12<00:01, 29.37it/s]
+ 93%|█████████▎| 373/400 [00:12<00:00, 29.30it/s]
+ 94%|█████████▍| 376/400 [00:12<00:00, 29.46it/s]
+ 95%|█████████▍| 379/400 [00:12<00:00, 29.41it/s]
+ 96%|█████████▌| 383/400 [00:12<00:00, 29.63it/s]
+ 96%|█████████▋| 386/400 [00:12<00:00, 29.20it/s]
+ 97%|█████████▋| 389/400 [00:12<00:00, 29.08it/s]
+ 98%|█████████▊| 392/400 [00:12<00:00, 29.13it/s]
+ 99%|█████████▉| 395/400 [00:13<00:00, 29.20it/s]
+100%|█████████▉| 398/400 [00:13<00:00, 29.38it/s]
+100%|██████████| 400/400 [00:13<00:00, 30.37it/s]
+Other agent actions took 5.313328266143799 seconds
+Total simulation time for 400 steps: 13.172253847122192 	 Other agent action time: 0 	 30.36686087608234 steps/s
+Curr learning rate 0.001 	 Curr reward per step 0.02625
+
+0/8:   0%|          | 0/10 [00:00<?, ?it/s]
