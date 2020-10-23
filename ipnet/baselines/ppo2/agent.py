@@ -69,15 +69,16 @@ class AgentPair(AgentGroup):
 
     def joint_action(self, state):
         if self.a0 is self.a1:
-            raise NotImplementedError
+            # raise NotImplementedError
             # When using the same instance of an agent for self-play,
             # reset agent index at each turn to prevent overwriting it
 
             self.a0.set_agent_index(0)
             action_0 = self.a0.action(state)
             self.a1.set_agent_index(1)
-            a1_state = state[-1]  # take the most recent state
-            action_1 = self.a1.action(a1_state)
+            # a1_state = state[-1]  # take the most recent state
+            # action_1 = self.a1.action(a1_state)
+            action_1 = self.a1.action(state)
             return (action_0, action_1)
         else:
             return super(AgentPair, self).joint_action(state=state)

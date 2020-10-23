@@ -5,7 +5,6 @@ import os.path as osp
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from ipnet.baselines.ppo2.policies import build_policy
-
 try:
     from mpi4py import MPI
 except ImportError:
@@ -17,9 +16,7 @@ from collections import defaultdict
 def constfn(val):
     def f(_):
         return val
-
     return f
-
 
 def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None, seed=None, nsteps=2048, ent_coef=0.0,
           lr=3e-4, vf_coef=0.5, max_grad_norm=0.5, gamma=0.99, lam=0.95, log_interval=10,
@@ -358,7 +355,6 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
         # Visualization of rollouts with actual other agent
         run_type = additional_params["RUN_TYPE"]
         if run_type in ["ppo", "joint_ppo"] and update % additional_params["VIZ_FREQUENCY"] == 0:
-            print('i have entered 2')
             from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
             from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
             from ipnet.baselines.ppo2.agent import AgentPair
@@ -373,8 +369,8 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
             if run_type == "ppo":
                 if additional_params["OTHER_AGENT_TYPE"] == 'sp':
-                    raise NotImplementedError
-                    # agent_pair = AgentPair(agent, agent, allow_duplicate_agents=True)
+                    # raise NotImplementedError
+                    agent_pair = AgentPair(agent, agent, is_ipnet_first=True, allow_duplicate_agents=True)
                 else:
                     env.other_agent.set_mdp(mdp)
                     agent_pair = AgentPair(agent, env.other_agent, is_ipnet_first=True)
