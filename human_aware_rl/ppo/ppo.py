@@ -395,5 +395,4 @@ def ppo_run(params):
         print("Saved training info at", curr_seed_dir + "training_info")
         save_pickle(train_info, curr_seed_dir + "training_info")
         train_infos.append(train_info)
-    
     return train_infos
