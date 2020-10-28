@@ -195,14 +195,18 @@ def conv_network_fn(**kwargs):
         out = tf.reshape(out, shape=[batchsize, h_length, out_dims])
 
         out = tf.reshape(out, shape=[batchsize, h_length * out_dims])
+        # weights, biases = [], []
+        # weight, bias = hypernetwork_head(_inputs=out, out_shape=[_policy_in_dims, size_hidden_layers])
+        # weights.append(weight)
+        # biases.append(bias)
+        # for _ in range(num_hidden_layers-1):
+        #     weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
+        #     weights.append(weight)
+        #     biases.append(bias)
         weights, biases = [], []
-        weight, bias = hypernetwork_head(_inputs=out, out_shape=[_policy_in_dims, size_hidden_layers])
+        weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
         weights.append(weight)
         biases.append(bias)
-        for _ in range(num_hidden_layers-1):
-            weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
-            weights.append(weight)
-            biases.append(bias)
         return weights, biases
 
     def network_fn(_x):
@@ -224,7 +228,12 @@ def conv_network_fn(**kwargs):
         out = conv_fn(conv_in=_inputs)  # B x D
         out = tf.expand_dims(out, axis=1)  # B x 1 x D
         dims = out.shape[2]  # D
+
         weights, biases = hypernetwork_generator(_inputs=_x, _policy_in_dims=dims)
+        # todo: remove this if we no longer doing one layer
+        assert len(weights) == len(biases) == 1
+        for _ in range(num_hidden_layers - 1):
+            out = tf.layers.dense(out, size_hidden_layers, activation=tf.nn.leaky_relu)
 
         for i, weight in enumerate(weights):
             bias = biases[i]
