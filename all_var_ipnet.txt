@@ -1,0 +1,104 @@
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/kernel:0' shape=(5, 5, 20, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/bias:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/kernel:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/bias:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/kernel:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/bias:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/kernel:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/kernel:0' shape=(64, 9600) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/bias:0' shape=(9600,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/kernel:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/kernel:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/bias:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/kernel:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/kernel:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/bias:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/kernel:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/bias:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/w:0' shape=(64, 6) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/b:0' shape=(6,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/w:0' shape=(64, 1) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/b:0' shape=(1,) dtype=float32_ref>
+<tf.Variable 'beta1_power:0' shape=() dtype=float32_ref>
+<tf.Variable 'beta2_power:0' shape=() dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/kernel/Adam:0' shape=(5, 5, 20, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/kernel/Adam_1:0' shape=(5, 5, 20, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/bias/Adam:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_initial/bias/Adam_1:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/kernel/Adam:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/kernel/Adam_1:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/bias/Adam:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_0/bias/Adam_1:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/kernel/Adam:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/kernel/Adam_1:0' shape=(3, 3, 25, 25) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/bias/Adam:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/conv_1/bias/Adam_1:0' shape=(25,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/kernel/Adam:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/kernel/Adam_1:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_1/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/kernel/Adam:0' shape=(64, 9600) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/kernel/Adam_1:0' shape=(64, 9600) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/bias/Adam:0' shape=(9600,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_2/bias/Adam_1:0' shape=(9600,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_3/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/kernel/Adam:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/kernel/Adam_1:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_4/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_5/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/kernel/Adam:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/kernel/Adam_1:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/bias/Adam:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_6/bias/Adam_1:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_7/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/kernel/Adam:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/kernel/Adam_1:0' shape=(1500, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_8/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_9/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/kernel/Adam:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/kernel/Adam_1:0' shape=(64, 4096) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/bias/Adam:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_10/bias/Adam_1:0' shape=(4096,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/kernel/Adam:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/kernel/Adam_1:0' shape=(64, 64) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/bias/Adam:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/dense_11/bias/Adam_1:0' shape=(64,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/w/Adam:0' shape=(64, 6) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/w/Adam_1:0' shape=(64, 6) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/b/Adam:0' shape=(6,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/pi/b/Adam_1:0' shape=(6,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/w/Adam:0' shape=(64, 1) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/w/Adam_1:0' shape=(64, 1) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/b/Adam:0' shape=(1,) dtype=float32_ref>
+<tf.Variable 'ppo_agent/ppo2_model/vf/b/Adam_1:0' shape=(1,) dtype=float32_ref>

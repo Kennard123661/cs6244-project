@@ -30,7 +30,7 @@ from human_aware_rl.experiments.bc_experiments import BEST_BC_MODELS_PATH
 # PARAMS
 @ex.config
 def my_config():
-    
+
     ##################
     # GENERAL PARAMS #
     ##################
@@ -48,7 +48,7 @@ def my_config():
     RUN_TYPE = "ppo"
 
     # Reduce parameters to be able to run locally to test for simple bugs
-    LOCAL_TESTING = False
+    LOCAL_TESTING = True
 
     # Choice among: bc_train, bc_test, sp, hm, rnd
     OTHER_AGENT_TYPE = "bc_train"
@@ -74,7 +74,7 @@ def my_config():
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
     # VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
-    VIZ_FREQUENCY = 1 if not LOCAL_TESTING else 10
+    VIZ_FREQUENCY = 1 if not LOCAL_TESTING else 1
 
     ##############
     # PPO PARAMS #
@@ -101,7 +101,7 @@ def my_config():
     LR = 1e-3
 
     # Factor by which to reduce learning rate over training
-    LR_ANNEALING = 1 
+    LR_ANNEALING = 1
 
     # Entropy bonus coefficient
     ENTROPY = 0.1
@@ -126,7 +126,7 @@ def my_config():
     SELF_PLAY_HORIZON = None
 
     # 0 is default value that does no annealing
-    REW_SHAPING_HORIZON = 0 
+    REW_SHAPING_HORIZON = 0
 
     # Whether mixing of self play policies
     # happens on a trajectory or on a single-timestep level
@@ -167,7 +167,7 @@ def my_config():
         "POT_DISTANCE_REW": 0,
         "SOUP_DISTANCE_REW": 0,
     }
-    
+
     # Env params
     horizon = 400
 
@@ -239,7 +239,7 @@ def save_ppo_model(model, save_folder):
         save_folder,
         inputs={"obs": model.act_model.x},
         outputs={
-            "action": model.act_model.action, 
+            "action": model.act_model.action,
             "value": model.act_model.vf,
             "action_probs": model.act_model.action_probs
         }
@@ -279,7 +279,7 @@ def configure_other_agent(params, gym_env, mlp, mdp):
 
     else:
         raise ValueError("unknown type of agent to match with")
-        
+
     if not params["OTHER_AGENT_TYPE"] == "sp":
         assert mlp.mdp == mdp
         agent.set_mdp(mdp)
@@ -330,15 +330,15 @@ def match_ppo_with_other_agent(save_dir, other_agent, n=1, display=False):
 def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None, single=False):
     from collections import defaultdict
     train_infos, config = load_training_data(name, seeds)
-    
+
     if print_config:
         print(config)
-    
+
     if limit is None:
         limit = config["PPO_RUN_TOT_TIMESTEPS"]
-    
+
     num_datapoints = len(train_infos[0]['eprewmean'])
-    
+
     prop_data = limit / config["PPO_RUN_TOT_TIMESTEPS"]
     ciel_data_idx = int(num_datapoints * prop_data)
 
@@ -351,7 +351,7 @@ def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None,
     if not single:
         seaborn.tsplot(time=info['xs'], data=datas)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    
+
     if single:
         plt.legend()
 
@@ -380,10 +380,10 @@ def ppo_run(params):
 
         print("Creating env with params", params)
         # Configure mdp
-        
+
         mdp = OvercookedGridworld.from_layout_name(**params["mdp_params"])
         env = OvercookedEnv(mdp, **params["env_params"])
-        mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=True) 
+        mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=True)
 
         # Configure gym env
         gym_env = get_vectorized_gym_env(
@@ -402,11 +402,14 @@ def ppo_run(params):
         # Train model
         params["CURR_SEED"] = seed
         train_info = update_model(gym_env, model, **params)
-        
+
         # Save model
         save_ppo_model(model, curr_seed_dir + model.agent_name)
         print("Saved training info at", curr_seed_dir + "training_info")
         save_pickle(train_info, curr_seed_dir + "training_info")
         train_infos.append(train_info)
         break
+    # print var in scope
+    for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+        print(i)   # i.name if you want just a name
     return train_infos

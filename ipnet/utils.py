@@ -148,8 +148,9 @@ def conv_network_fn(**kwargs):
                 activation=tf.nn.leaky_relu,
                 name="conv_{}".format(i)
             )
-        out = tf.layers.flatten(conv_out)
-        assert len(out.shape) == 2, '{}'.format(out.shape)
+        out = conv_out
+        # out = tf.layers.flatten(conv_out)
+        # assert len(out.shape) == 2, '{}'.format(out.shape)
         return out
 
     def hypernetwork_head(_inputs, out_shape: list):
@@ -178,7 +179,178 @@ def conv_network_fn(**kwargs):
         weight = tf.reshape(weight, shape=[batchsize, policy_in, policy_out])
         return weight, bias
 
-    def hypernetwork_generator(_inputs, _policy_in_dims: int) -> (list, list):
+    def add_positional_embedding(embedding, name=0):
+        """
+        :param embedding: A tf.Tensor of shape [B, T, E]
+        """
+        T = tf.shape(embedding)[1]
+        E= embedding.get_shape().as_list()[2]
+
+        # Create grid
+        pos = tf.cast(tf.tile(tf.expand_dims(tf.range(T), axis=0),
+                            multiples=[E, 1]), tf.float32)  # [E, T]
+        i = tf.cast(tf.tile(tf.expand_dims(tf.range(E), axis=1),
+                            multiples=[1, T]), tf.float32)    # [E, T]
+
+        # Sine waves
+        sine = tf.sin(tf.divide(pos, tf.pow(float(10**4), tf.divide(i, E))))     # [E, T]
+        cosine = tf.cos(tf.divide(pos, tf.pow(float(10**4), tf.divide(i, E))))   # [E, T]
+
+        # Shift cosine by one position
+        cosine = tf.manip.roll(cosine, shift=1, axis=0)
+
+        # Alternate between waves depending on parity
+        even_mask = tf.equal(tf.mod(tf.range(E), 2), 0)   # [E]
+        joint_pos = tf.where(condition=even_mask, x=sine, y=cosine)     # [E, T]
+        joint_pos = tf.transpose(joint_pos)     # [T, E]
+
+        # Magnitude of positional embedding
+        gamma = tf.get_variable(name="gamma_%d" % name,
+                              shape=[],
+                              initializer=tf.initializers.ones,   # initially the same as specified by the paper
+                              trainable=True,
+                              dtype=tf.float32)
+
+        # Apply positional encoding
+        return tf.add(embedding, gamma * joint_pos, name="composed_embedding_%d"%name) # [B, T, E]
+
+    def attention(query, key, value, num_heads, head_dims):
+        """
+         Multi-head attention
+         :param query: A tf.Tensor of shape [B, TQ, E]
+         :param key: A tf.Tensor of shape [B, TK, E]
+         :param value: A tf.Tensor of shape [B, TK, E]
+         :param num_heads: How many sets of weights are desired
+         :param head_dims: Projection size of each head
+        """
+        with tf.name_scope("attention"):
+            # Make shapes compatible for tf.Dense
+            B = tf.shape(query)[0]
+            embedding_size = query.get_shape().as_list()[2]
+
+            # Number of times steps
+            TQ = tf.shape(query)[1]
+            TK = tf.shape(key)[1]
+
+            query = tf.reshape(query, shape=[B * TQ, embedding_size], name="query")   # [B * TQ, E]
+            key = tf.reshape(key, shape=[B * TK, embedding_size], name="key")   # [B * TK, E]
+            value = tf.reshape(value, shape=[B * TK, embedding_size], name="value")   # [B * TK, E]
+
+            # Linear projections & single attention
+            head_summaries = []
+            for head_id in range(num_heads):
+                # Apply three different linear projections
+                head_query = tf.layers.Dense(units=head_dims,
+                                             activation=None,
+                                             use_bias=False)(query)  # [B * TQ, head_dims]
+                head_key = tf.layers.Dense(units=head_dims,
+                                           activation=None,
+                                           use_bias=False)(key)  # [B * TK, head_dims]
+                head_value = tf.layers.Dense(units=head_dims,
+                                             activation=None,
+                                             use_bias=False)(value)  # [B * TK, head_dims]
+                # Reshape
+                head_query = tf.reshape(head_query, shape=[B, TQ, head_dims])  # [B, TQ, head_dims]
+                head_key = tf.reshape(head_key, shape=[B, TK, head_dims])  # [B, TK, head_dims]
+                head_value = tf.reshape(head_value, shape=[B, TK, head_dims])  # [B, TK, head_dims]
+                # Derive attention logits
+                head_attention_weights = tf.matmul(head_query, tf.transpose(head_key, perm=[0, 2, 1]))  # [B, TQ, head_dims] @ [B, head_dims, TK]-> [B, TQ, TK]
+                # Rescale
+                head_attention_weights = tf.divide(head_attention_weights, np.sqrt(head_dims))  # [B, TQ, TK] Each query has a score for every key (TK)
+                # Normalize weights # not dynamic
+                head_attention_weights = tf.nn.softmax(head_attention_weights, axis=-1) # [B, TQ, TK]
+                # Apply weights to values
+                head_summary = tf.matmul(head_attention_weights, head_value)  # [B, TQ, TK] @ [B, TK, head_dims] -> [B, TQ, head_dims]
+                # Add to collection
+                head_summaries.append(head_summary)
+
+            # Contract list of Tensors
+            head_summaries = tf.stack(head_summaries, axis=2, name="head_summaries")   # [B, TQ, num_head, head_dims]
+            # Project back to input embedding size (E)
+            head_summaries = tf.reshape(head_summaries,
+                                        shape=[B * TQ, num_heads * head_dims],
+                                        name="head_summaries_reshaped")  # [B * TQ, H * head_dims]
+            output = tf.layers.Dense(units=embedding_size,
+                                     activation=None,
+                                     use_bias=False)(head_summaries) # [B * TQ, H * head_dims] x [1, H * head_dims, E] -> [B * TQ, E]
+            output = tf.reshape(output, shape=[B, TQ, embedding_size], name="attention")   # [B, TQ, E]
+            return output
+
+    def encoder_layer(x, num_heads, head_dims,
+                      dense_dim, dense_activation,
+                      dropout_rate=0, is_training=None):
+        """
+        Encoder layer
+        :param x: A tf.Tensor of shape [B, T, E]
+        :param x_length:  A tf.Tensor of shape [B] #dynamic length: length for each B (sentence)
+        :param num_heads: Number of attention heads
+        :param head_dims: Dimension of linear projection of each head
+        :param dense_dims: Dimension of linear projection between dense layers
+        :param dense_activation: Activation function of the dense layers
+        :param dropout_rate: How many neurons should be deactivated (between 0 and 1)
+        :param is_training: Whether we are in training or prediction mode
+
+        :return: A tf.Tensor of shape [B, T, E]
+        """
+
+        B = tf.shape(x)[0]
+        T = tf.shape(x)[1]
+        E = x.get_shape().as_list()[2]
+
+        """ First sub-layer (self attention) """
+        layer_norm_opts = {
+            "begin_norm_axis": 2,
+            "begin_params_axis": 2,
+            "scale": False,
+            "center": True
+        }
+
+        # Residual
+        residual = x    # [B, T, E]
+        # Layer normalization
+        x = tf.contrib.layers.layer_norm(inputs=x, **layer_norm_opts)      # [B, T, E]
+        # Self attention
+        x = attention(query=x,
+                      key=x,
+                      value=x,
+                      num_heads=num_heads,
+                      head_dims=head_dims)  # [B, T, E]
+        # Dropout
+        # x = tf.layers.Dropout(rate=dropout_rate, noise_shape=[B, 1, E])(x, training=is_training)     # [B, T, E]
+        # Residual connection
+        x = x + residual    # [B, T, E]
+        # Layer normalization
+        x = tf.contrib.layers.layer_norm(inputs=x, **layer_norm_opts)      # [B, T, E]
+
+        """ Second sub-layer (dense) """
+
+        # Residual
+        residual = x    # [B, T, E]
+        # PositionwiseFeedForward
+        # Reshape to make output compatible with tf.layers.Dense
+        x = tf.reshape(x, shape=[B * T, E])    # [B * T, E]
+        # Dense
+        x = tf.layers.Dense(units=dense_dim,
+                            use_bias=True,
+                            activation=dense_activation)(x)    # [B * T, dense_dim]
+        # Dropout
+        # x = tf.layers.Dropout(rate=dropout_rate, noise_shape=[1, dense_dim])(x, training=is_training)     # [B * T, dense_dim]
+        # Dense
+        x = tf.layers.Dense(units=E,
+                            use_bias=True,
+                            activation=dense_activation)(x)     # [B * T, E]
+        # Dropout
+        # x = tf.layers.Dropout(rate=dropout_rate, noise_shape=[1, E])(x, training=is_training)     # [B * T, E]
+        # Reshape again
+        x = tf.reshape(x, shape=[B, T, E])     # [B, T, E]
+        # Residual connection
+        x = x + residual     # [B, T, E]
+        # Layer normalization
+        x = tf.contrib.layers.layer_norm(inputs=x, **layer_norm_opts)     # [B, T, E]
+
+        return x
+
+    def hypernetwork_generator(_inputs, _policy_in_dims: int, is_training=False) -> (list, list):
         """
         Args:
             _inputs: [B, L, H, W, D] where B is the batch size, L is the sequence length of inputs
@@ -188,13 +360,19 @@ def conv_network_fn(**kwargs):
             returns a list of weight matrices and biases
         """
         assert len(_inputs.shape) == 5
-        batchsize, h_length, height, width, depth = _inputs.shape
+        batchsize, h_length, height, width, depth = _inputs.shape  #2, 10, 5, 4, 20
         out = tf.reshape(_inputs, shape=[batchsize * h_length, height, width, depth])  # BL x H x W x D
-        out = conv_fn(conv_in=out)  # BL x Dout
-        out_dims = tf.shape(out)[1]
-        out = tf.reshape(out, shape=[batchsize, h_length, out_dims])
+        out = conv_fn(conv_in=out)  #2*10, 3, 2, 25
+        out = tf.reshape(out, shape=[batchsize, h_length, -1]) #(2, 10, 150)
+        with tf.variable_scope("transformer"):
+            out = add_positional_embedding(out)
+            # one layer of encoder
+            out = encoder_layer(out, 4, 16, 32, 'relu', dropout_rate=0, is_training=is_training)
+            out = encoder_layer(out, 4, 16, 32, 'relu', dropout_rate=0, is_training=is_training)
+            # sum
+            out = tf.reduce_sum(out, 1)
+        # out = tf.reshape(out, shape=[batchsize, h_length * out.shape[-1]])
 
-        out = tf.reshape(out, shape=[batchsize, h_length * out_dims])
         weights, biases = [], []
         weight, bias = hypernetwork_head(_inputs=out, out_shape=[_policy_in_dims, size_hidden_layers])
         weights.append(weight)
@@ -205,7 +383,7 @@ def conv_network_fn(**kwargs):
             biases.append(bias)
         return weights, biases
 
-    def network_fn(_x):
+    def network_fn(_x, is_training=False):
         """
         Takes _x as inputs, predict weights for the linear layer of the policy network using a hypernetwork,
         then compute the output embedding
@@ -221,10 +399,12 @@ def conv_network_fn(**kwargs):
         _inputs = _x[:, history_length - 1, :, :, :]
         assert len(_inputs.shape) == 4
 
-        out = conv_fn(conv_in=_inputs)  # B x D
+        out = conv_fn(conv_in=_inputs)  #(2, 10, 150)
+        out = tf.layers.flatten(out) # B x D
+
         out = tf.expand_dims(out, axis=1)  # B x 1 x D
         dims = out.shape[2]  # D
-        weights, biases = hypernetwork_generator(_inputs=_x, _policy_in_dims=dims)
+        weights, biases = hypernetwork_generator(_inputs=_x, _policy_in_dims=dims, is_training=is_training)
 
         for i, weight in enumerate(weights):
             bias = biases[i]
@@ -233,6 +413,7 @@ def conv_network_fn(**kwargs):
             out = tf.nn.leaky_relu(out)  # B x 1 x D
         out = tf.squeeze(out, axis=1)  # B x D
         return out
+
     return network_fn
 
 
