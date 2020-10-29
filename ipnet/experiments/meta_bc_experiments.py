@@ -14,6 +14,7 @@ from overcooked_ai_py.agents.agent import AgentPair
 from human_aware_rl.utils import reset_tf, set_global_seed, common_keys_equal
 from ipnet.imitation.behavioural_cloning import train_meta_bc_agents, eval_with_benchmarking_from_saved, \
     BC_SAVE_DIR, plot_bc_run, DEFAULT_BC_PARAMS, get_bc_agent_from_saved
+from human_aware_rl.human.process_dataframes import get_worker_trajs_from_data
 from human_aware_rl.directory import DATA_DIR
 
 # Path for dict containing the best bc models paths
@@ -44,10 +45,6 @@ def train_bc_models(all_params, seeds):
                                                            model='train', **params)
             for _, model in model_dict.items():
                 plot_bc_run(model.bc_info, params['num_epochs'])
-            model_dict = train_meta_bc_agents_from_hh_data(agent_name="bc_test_seed{}".format(seed_idx),
-                                                           model='test', **params)
-            for _, model in model_dict.items():
-                plot_bc_run(model.bc_info, params['num_epochs'])
             reset_tf()
 
 
@@ -56,17 +53,20 @@ def evaluate_all_bc_models(all_params, num_rounds, num_seeds):
     bc_models_evaluation = {}
     for params in all_params:
         layout_name = params["layout_name"]
-        
-        print(layout_name)
-        bc_models_evaluation[layout_name] = {"train": {}, "test": {}}
+        worker_ids = get_train_worker_ids(layout_name=layout_name)
 
+        bc_models_evaluation[layout_name] = {"train": {worker_id: {} for worker_id in worker_ids},
+                                             "test": {worker_id: {} for worker_id in worker_ids}}
         for seed_idx in range(num_seeds):
-            eval_trajs = eval_with_benchmarking_from_saved(num_rounds, layout_name + "_bc_train_seed{}".format(seed_idx))
-            bc_models_evaluation[layout_name]["train"][seed_idx] = np.mean(eval_trajs['ep_returns'])
-            
-            eval_trajs = eval_with_benchmarking_from_saved(num_rounds, layout_name + "_bc_test_seed{}".format(seed_idx))
-            bc_models_evaluation[layout_name]["test"][seed_idx] = np.mean(eval_trajs['ep_returns'])
+            for worker_id in worker_ids:
+                save_name = os.path.join(layout_name + '_bc_train_seed{}'.format(seed_idx),
+                                         'worker-{}'.format(worker_id))
+                eval_trajs = eval_with_benchmarking_from_saved(num_rounds, save_name)
+                bc_models_evaluation[layout_name]["train"][worker_id][seed_idx] = np.mean(eval_trajs['ep_returns'])
 
+                save_name = os.path.join(layout_name + '_bc_test_seed{}'.format(seed_idx), 'worker-{}'.format(worker_id))
+                eval_trajs = eval_with_benchmarking_from_saved(num_rounds, save_name)
+                bc_models_evaluation[layout_name]["test"][worker_id][seed_idx] = np.mean(eval_trajs['ep_returns'])
     return bc_models_evaluation
 
 
@@ -103,6 +103,17 @@ def evaluate_bc_models(bc_model_paths, num_rounds):
     return best_bc_models_performance
 
 
+def get_train_worker_ids(layout_name: str):
+    bc_params = copy.deepcopy(DEFAULT_BC_PARAMS)
+    bc_params["data_params"]['train_mdps'] = [layout_name]
+    bc_params["data_params"]['data_path'] = os.path.join(DATA_DIR, 'human', 'anonymized', 'clean_train_trials.pkl')
+    bc_params["mdp_params"]['layout_name'] = layout_name
+    bc_params["mdp_params"]['start_order_list'] = None
+    expert_trajs = get_worker_trajs_from_data(**bc_params['data_params'])
+    worker_ids = list(expert_trajs.keys())
+    return worker_ids
+
+
 def run_all_bc_experiments():
     # Train BC models
     seeds = [5415, 2652, 6440, 1965, 6647]
@@ -119,8 +130,7 @@ def run_all_bc_experiments():
 
     # todo: add the script for evaluation the bc models
     print('INFO: evaluation not implemented, skipping...')
-    return
-    # Evaluate BC models
+
     set_global_seed(64)
     num_rounds = 100
     bc_models_evaluation = evaluate_all_bc_models(all_params, num_rounds, num_seeds)
@@ -137,7 +147,7 @@ def run_all_bc_experiments():
         "random3": [3, 3]
     }
 
-    final_bc_model_paths = { "train": {}, "test": {} }
+    final_bc_model_paths = {"train": {}, "test": {}}
     for layout_name, seed_indices in selected_models.items():
         train_idx, test_idx = seed_indices
         final_bc_model_paths["train"][layout_name] = "{}_bc_train_seed{}".format(layout_name, train_idx)

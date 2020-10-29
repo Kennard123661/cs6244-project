@@ -115,6 +115,7 @@ def run_all_bc_experiments():
 
     # Evaluate BC models
     set_global_seed(64)
+    exit()  # the best bc models are randomly picked anyway.
 
     num_rounds = 100
     bc_models_evaluation = evaluate_all_bc_models(all_params, num_rounds, num_seeds)
@@ -131,7 +132,7 @@ def run_all_bc_experiments():
         "random3": [3, 3]
     }
 
-    final_bc_model_paths = { "train": {}, "test": {} }
+    final_bc_model_paths = {"train": {}, "test": {}}
     for layout_name, seed_indices in selected_models.items():
         train_idx, test_idx = seed_indices
         final_bc_model_paths["train"][layout_name] = "{}_bc_train_seed{}".format(layout_name, train_idx)
