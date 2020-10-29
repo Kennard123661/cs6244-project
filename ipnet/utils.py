@@ -204,7 +204,8 @@ def conv_network_fn(**kwargs):
         #     weights.append(weight)
         #     biases.append(bias)
         weights, biases = [], []
-        weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
+        with tf.variable_scope('hypernetwork'):
+            weight, bias = hypernetwork_head(_inputs=out, out_shape=[size_hidden_layers, size_hidden_layers])
         weights.append(weight)
         biases.append(bias)
         return weights, biases

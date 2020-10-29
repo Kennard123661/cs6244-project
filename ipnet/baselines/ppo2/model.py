@@ -110,24 +110,37 @@ class Model(object):
         # UPDATE THE PARAMETERS USING LOSS
         # 1. Get the model parameters
         params = tf.trainable_variables(self.scope + '/ppo2_model')
+        hyper_params = tf.trainable_variables(self.scope + '/ppo_model')
+
         # 2. Build our trainer
         if MPI is not None:
             self.trainer = MpiAdamOptimizer(MPI.COMM_WORLD, learning_rate=LR, epsilon=1e-5)
         else:
             self.trainer = tf.train.AdamOptimizer(learning_rate=LR, epsilon=1e-5)
+
         # 3. Calculate the gradients
         grads_and_var = self.trainer.compute_gradients(loss, params)
         grads, var = zip(*grads_and_var)
+        hyper_grads_and_vars = self.trainer.compute_gradients(loss, hyper_params)
+        hyper_grads, hyper_vars = zip(*hyper_grads_and_vars)
 
         if max_grad_norm is not None:
             # Clip the gradients (normalize)
             grads, _grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
+            hyper_grads, hypernet_grad_norm = tf.clip_by_global_norm(hyper_grads, max_grad_norm)
         grads_and_var = list(zip(grads, var))
+        hyper_grads_and_vars = list(zip(hyper_grads, hyper_vars))
+
         # zip aggregate each gradient with parameters associated
         # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
         self.grads = grads
         self.var = var
+
+        self.hyper_grads = hyper_grads
+        self.hyper_vars = hyper_vars
         self._train_op = self.trainer.apply_gradients(grads_and_var)
+        self._train_hyper_op = self.trainer.apply_gradients(hyper_grads_and_vars)  # to train hypernet only
+
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
         self.stats_list = [pg_loss, vf_loss, entropy, approxkl, clipfrac]
 
@@ -174,6 +187,33 @@ class Model(object):
 
         return self.sess.run(
             self.stats_list + [self._train_op],
+            td_map
+        )[:-1]
+
+    def train_hypernet(self, lr, cliprange, obs, returns, masks, actions, values, neglogpacs, states=None):
+        # Here we calculate advantage A(s,a) = R + yV(s') - V(s)
+        # Returns = R + yV(s')
+        advs = returns - values
+
+        # Normalize the advantages
+        advs = (advs - advs.mean()) / (advs.std() + 1e-8)
+        assert len(obs.shape) == 5, 'should be the form (B, T, H, W, D)'
+        td_map = {
+            self.train_model.x: obs,
+            self.A: actions,
+            self.ADV: advs,
+            self.R: returns,
+            self.LR: lr,
+            self.CLIPRANGE: cliprange,
+            self.OLDNEGLOGPAC: neglogpacs,
+            self.OLDVPRED: values
+        }
+        if states is not None:
+            td_map[self.train_model.S] = states
+            td_map[self.train_model.M] = masks
+
+        return self.sess.run(
+            self.stats_list + [self._train_hyper_op],
             td_map
         )[:-1]
 
