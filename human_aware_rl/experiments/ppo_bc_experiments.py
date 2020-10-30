@@ -32,6 +32,8 @@ def evaluate_ppo_and_bc_models_for_layout(layout, num_rounds, bc_model_paths, pp
 
     agent_bc_test, bc_params = get_bc_agent_from_saved(bc_model_paths['test'][layout])
     ppo_bc_train_path = ppo_bc_model_paths['bc_train'][layout]
+    print(ppo_bc_train_path)
+    exit()
     ppo_bc_test_path = ppo_bc_model_paths['bc_test'][layout]
     evaluator = AgentEvaluator(mdp_params=bc_params["mdp_params"], env_params=bc_params["env_params"])
     

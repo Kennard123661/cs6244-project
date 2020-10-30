@@ -246,8 +246,8 @@ def save_ppo_model(model, save_folder):
     )
 
 
-def configure_other_agent(params, gym_env, mlp, mdp, worker_id: int):
-    assert params['OTHER_AGENT_TYPE'][:2] == 'bc':
+# def configure_other_agent(params, gym_env, mlp, mdp, worker_id: int):
+#     assert params['OTHER_AGENT_TYPE'][:2] == 'bc':
 
 
 def configure_other_agent(params, gym_env, mlp, mdp):
@@ -386,6 +386,7 @@ def ppo_run(params):
         # Configure mdp
         
         mdp = OvercookedGridworld.from_layout_name(**params["mdp_params"])
+        layout_name = params['mdp_params']['layout_name']
         env = OvercookedEnv(mdp, **params["env_params"])
         mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=True) 
 
@@ -397,6 +398,11 @@ def ppo_run(params):
         gym_env.trajectory_sp = params["TRAJECTORY_SELF_PLAY"]
         gym_env.update_reward_shaping_param(1 if params["mdp_params"]["rew_shaping_params"] != 0 else 0)
 
+        curr_seed_dir = params["SAVE_DIR"] + "seed" + str(seed) + "/"
+        os.makedirs(curr_seed_dir, exist_ok=True)
+        ppo_bc_train_path = os.path.
+        agent_ppo_bc_train, ppo_config = get_ppo_agent(ppo_bc_train_path, sequence_length=HISTORY_LENGTH,
+                                                       seed=seeds["bc_train"][seed_idx], best=best)
         configure_other_agent(params, gym_env, mlp, mdp)
 
         # Create model
