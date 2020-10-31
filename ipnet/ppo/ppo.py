@@ -74,7 +74,7 @@ def my_config():
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
     # VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
-    VIZ_FREQUENCY = 1 if not LOCAL_TESTING else 1
+    VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 1
 
     ##############
     # PPO PARAMS #
@@ -142,7 +142,7 @@ def my_config():
     NETWORK_TYPE = 'conv_hypernetwork'
 
     HISTORY = 10
-    NUM_HYPERNET_LAYERS = 2
+    NUM_HYPERNET_LAYERS = 0
 
     # Network params
     NUM_HIDDEN_LAYERS = 3
@@ -408,7 +408,7 @@ def ppo_run(params):
         print("Saved training info at", curr_seed_dir + "training_info")
         save_pickle(train_info, curr_seed_dir + "training_info")
         train_infos.append(train_info)
-        break
+
     # print var in scope
     for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
         print(i)   # i.name if you want just a name

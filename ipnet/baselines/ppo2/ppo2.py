@@ -395,11 +395,11 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
             print("tot rew", tot_rewards, "tot rew shaped", tot_shaped_rewards)
             print(additional_params["SAVE_DIR"])
 
-        #TODO: REMOVE
-        if update == 3:
-            print(additional_params["VIZ_FREQUENCY"], update % additional_params["VIZ_FREQUENCY"])
-            print("END UPDATE %d iter" % update)
-            break
+        # #TODO: REMOVE
+        # if update == 1:
+        #     print(additional_params["VIZ_FREQUENCY"], update % additional_params["VIZ_FREQUENCY"])
+        #     print("END UPDATE %d iter" % update)
+        #     break
 
     if nupdates > 0 and early_stopping:
         checkdir = osp.join(logger.get_dir(), 'checkpoints')
