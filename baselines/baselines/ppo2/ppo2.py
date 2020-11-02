@@ -112,8 +112,8 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
         model_fn = Model
 
     model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
-                    nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
-                    max_grad_norm=max_grad_norm, scope=scope)
+                     nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
+                     max_grad_norm=max_grad_norm, scope=scope)
 
     if load_path is not None:
         model.load(load_path)
@@ -144,10 +144,10 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
         # Calculate the cliprange
         cliprangenow = cliprange(frac)
         # Get minibatch
-        obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
-        
+        obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()  # pylint: disable=E0632
+
         if eval_env is not None:
-            eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
+            eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() # pylint: disable=E0632
 
         eplenmean = safemean([epinfo['ep_length'] for epinfo in epinfos])
         eprewmean = safemean([epinfo['r'] for epinfo in epinfos])
@@ -183,7 +183,7 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
                     slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices))
 
-        else: # recurrent version
+        else:  # recurrent version
             assert nenvs % nminibatches == 0
             envsperbatch = nenvs // nminibatches
             envinds = np.arange(nenvs)
@@ -321,8 +321,7 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
                         curr_timestep = update * nbatch
                         env.self_play_randomization = fn(curr_timestep)
                         print("Current self-play randomization", env.self_play_randomization)
-
-                
+        # print('exited')
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and (MPI is None or MPI.COMM_WORLD.Get_rank() == 0):
             checkdir = osp.join(logger.get_dir(), 'checkpoints')
@@ -330,17 +329,17 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
             savepath = osp.join(checkdir, '%.5i'%update)
             print('Saving to', savepath)
             model.save(savepath)
-        
+
         # Visualization of rollouts with actual other agent
         run_type = additional_params["RUN_TYPE"]
         if run_type in ["ppo", "joint_ppo"] and update % additional_params["VIZ_FREQUENCY"] == 0:
+            print('i have entered 2')
             from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
             from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
             from overcooked_ai_py.agents.agent import AgentPair
             from overcooked_ai_py.agents.benchmarking import AgentEvaluator
             from human_aware_rl.baselines_utils import get_agent_from_model
             print(additional_params["SAVE_DIR"])
-
             mdp = OvercookedGridworld.from_layout_name(**additional_params["mdp_params"])
             overcooked_env = OvercookedEnv(mdp, **additional_params["env_params"])
             agent = get_agent_from_model(model, additional_params["sim_threads"], is_joint_action=(run_type == "joint_ppo"))
@@ -363,12 +362,13 @@ def learn(*, network, env, total_timesteps, early_stopping = False, eval_env = N
                 
             else:
                 agent_pair = AgentPair(agent)
-            
+            print('run agent pair')
             trajectory, time_taken, tot_rewards, tot_shaped_rewards = overcooked_env.run_agents(agent_pair, display=True, display_until=100)
             overcooked_env.reset()
             agent_pair.reset()
             print("tot rew", tot_rewards, "tot rew shaped", tot_shaped_rewards)
             print(additional_params["SAVE_DIR"])
+            break
 
     if nupdates > 0 and early_stopping:
         checkdir = osp.join(logger.get_dir(), 'checkpoints')

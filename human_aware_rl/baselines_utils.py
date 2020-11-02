@@ -143,10 +143,8 @@ def conv_network_fn(**kwargs):
         out = tf.layers.flatten(conv_out)
         for _ in range(num_hidden_layers):
             out = tf.layers.dense(out, size_hidden_layers, activation=tf.nn.leaky_relu)
-        
         print("Last layer conv network output shape", out.shape)
-        
-        # NOTE: not sure if not supposed to add linear layer. I think it is though, 
+        # NOTE: not sure if not supposed to add linear layer. I think it is though,
         # as things work and similar to code in baseline/models.py? Maybe double check later.
 
         # To check how many parameters uncomment next line

@@ -45,7 +45,6 @@ class Runner(AbstractEnvRunner):
             else:
                 other_agent_actions = self.env.other_agent.direct_policy(self.obs1)
                 return other_agent_actions
-            
 
         for _ in range(self.nsteps):
             # Given observations, get action value and neglopacs
@@ -134,12 +133,11 @@ class Runner(AbstractEnvRunner):
                 maybeepinfo = info.get('episode')
                 if maybeepinfo: epinfos.append(maybeepinfo)
             mb_rewards.append(rewards)
-
         print("Other agent actions took", other_agent_simulation_time, "seconds")
         tot_time = time.time() - tot_time
         print("Total simulation time for {} steps: {} \t Other agent action time: {} \t {} steps/s".format(self.nsteps, tot_time, int_time, self.nsteps / tot_time))
         
-        #batch of steps to batch of rollouts
+        # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)
         mb_actions = np.asarray(mb_actions)
@@ -165,9 +163,13 @@ class Runner(AbstractEnvRunner):
         return (*map(sf01, (mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
             mb_states, epinfos)
 # obs, returns, masks, actions, values, neglogpacs, states = runner.run()
+
+
 def sf01(arr):
     """
     swap and then flatten axes 0 and 1
     """
     s = arr.shape
-    return arr.swapaxes(0, 1).reshape(s[0] * s[1], *s[2:])
+    out = arr.swapaxes(0, 1)
+    out = out.reshape(s[0] * s[1], *s[2:])
+    return out
