@@ -43,7 +43,6 @@ def init_gym_env(bc_params):
     env_setup_params = copy.deepcopy(bc_params)
     del env_setup_params["data_params"]  # Not necessary for setting up env
     mdp = OvercookedGridworld.from_layout_name(**bc_params["mdp_params"])
-    mdp = OvercookedGridworld.from_layout_name(**bc_params["mdp_params"])
     env = OvercookedEnv(mdp, **bc_params["env_params"])
     gym_env = gym.make("Overcooked-v0")
     
@@ -57,11 +56,11 @@ def train_meta_bc_agents(model_save_dir, bc_params, num_epochs=1000, lr=1e-4, ad
     expert_trajs = get_worker_trajs_from_data(**bc_params["data_params"])
 
     model_dict = {}
-    for worker, trajs in expert_trajs.items():
+    for worker, trajs in expert_trajs.items(): 				# for keys, trajectories in the dictionary 'expert_trajs'
         # Load the expert dataset
         print('INFO: training worker {}'.format(worker))
         save_npz_file(trajs, "temp.npz")
-        save_dir = os.path.join(model_save_dir, 'worker-{}'.format(worker))
+        save_dir = os.path.join(model_save_dir, 'worker-{}'.format(worker) + os.path.sep)
         dataset = ExpertDataset(expert_path="temp.npz", verbose=1, train_fraction=0.85)
         assert dataset is not None
         assert dataset.train_loader is not None
