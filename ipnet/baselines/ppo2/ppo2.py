@@ -213,7 +213,11 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
                 batch_obs = np.reshape(batch_obs, newshape=[nbatch_train, history_length, h, w, d])
 
                 slices = (arr[selected_idxs] for arr in (returns, masks, actions, values, neglogpacs))
-                mblossvals.append(model.train(lrnow, cliprangenow, batch_obs, *slices))
+                
+                if additional_params['OTHER_AGENT_TYPE'] == 'meta_bc_train':
+                    mblossvals.append(model.train_hypernet(lrnow, cliprangenow, batch_obs, *slices))
+                else:
+                    mblossvals.append(model.train(lrnow, cliprangenow, batch_obs, *slices))
             # todo: remove the break below
             # break
         # Feedforward --> get losses --> update
@@ -373,7 +377,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
             if run_type == "ppo":
                 if additional_params["OTHER_AGENT_TYPE"] == 'sp':
-					agent_pair = AgentPair(agent, agent, is_ipnet_first=True, allow_duplicate_agents=True)
+                    agent_pair = AgentPair(agent, agent, is_ipnet_first=True, allow_duplicate_agents=True)
                 else:
                     env.other_agent.set_mdp(mdp)
                     agent_pair = AgentPair(agent, env.other_agent, is_ipnet_first=True)
