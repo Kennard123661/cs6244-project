@@ -101,6 +101,11 @@ def get_bc_agent_from_saved(model_name, no_waits=False):
     return get_bc_agent_from_model(model, bc_params, no_waits), bc_params
 
 
+def get_meta_bc_agent_from_saved(model_worker_path, no_waits=False):
+    model, bc_params = load_meta_bc_model_from_path(model_worker_path)
+    return get_bc_agent_from_model(model, bc_params, no_waits), bc_params
+
+
 def get_bc_agent_from_model(model, bc_params, no_waits=False):
     mdp = OvercookedGridworld.from_layout_name(**bc_params["mdp_params"])
     mlp = MediumLevelPlanner.from_pickle_or_compute(mdp, NO_COUNTERS_PARAMS, force_compute=False)
@@ -154,6 +159,13 @@ def load_bc_model_from_path(model_name):
     bc_metadata = load_pickle(BC_SAVE_DIR + model_name + "/bc_metadata")
     bc_params = bc_metadata["bc_params"]
     model = GAIL.load(BC_SAVE_DIR + model_name + "/model")
+    return model, bc_params
+
+
+def load_meta_bc_model_from_path(model_worker_path):
+    bc_metadata = load_pickle(os.path.join(model_worker_path,'bc_metadata'))
+    bc_params = bc_metadata["bc_params"]
+    model = GAIL.load(os.path.join(model_worker_path,'model'))
     return model, bc_params
 
 
