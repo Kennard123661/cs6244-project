@@ -373,7 +373,7 @@ def learn(*, network, env, total_timesteps, early_stopping=False, eval_env=None,
 
             if run_type == "ppo":
                 if additional_params["OTHER_AGENT_TYPE"] == 'sp':
-					agent_pair = AgentPair(agent, agent, is_ipnet_first=True, allow_duplicate_agents=True)
+                    agent_pair = AgentPair(agent, agent, is_ipnet_first=True, allow_duplicate_agents=True)
                 else:
                     env.other_agent.set_mdp(mdp)
                     agent_pair = AgentPair(agent, env.other_agent, is_ipnet_first=True)

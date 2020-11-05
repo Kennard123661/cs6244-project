@@ -110,7 +110,7 @@ class Model(object):
         # UPDATE THE PARAMETERS USING LOSS
         # 1. Get the model parameters
         params = tf.trainable_variables(self.scope + '/ppo2_model')
-        hyper_params = tf.trainable_variables(self.scope + '/ppo_model/hypernetwork')
+        hyper_params = tf.trainable_variables(self.scope + '/ppo2_model/pi/hypernetwork')
 
         # 2. Build our trainer
         if MPI is not None:
