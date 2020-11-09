@@ -448,11 +448,11 @@ def ppo_run(params):
             if agent_counter >= 1:
                 break
         
-        # Save model
-        ppo_model_path = curr_seed_dir + model.agent_name
-        save_ppo_model(model, ppo_model_path)
-        print("Saved training info at", curr_seed_dir + "training_info")
-        save_pickle(train_info, curr_seed_dir + "training_info")
-        train_infos.append(train_info)
+            # Save model
+            ppo_model_path = curr_seed_dir + model.agent_name
+            save_ppo_model(model, ppo_model_path)
+            print("Saved training info at", curr_seed_dir + "training_info")
+            save_pickle(train_info, curr_seed_dir + "training_info")
+            train_infos.append(train_info)
         break
     return train_infos
