@@ -370,7 +370,7 @@ def plot_ppo_run(name, sparse=False, limit=None, print_config=False, seeds=None,
 def filter_train_agents(bc_dir_contents, layout_name):
     bc_agent_dirs = []
     for env, workers, files in os.walk(bc_dir_contents):
-        if ('train' and layout_name in env):
+        if (('train' in env) and (layout_name in env)):
             for worker in workers:
                 agent_dir = os.path.join(env,worker)
                 bc_agent_dirs.append(agent_dir)
@@ -415,9 +415,10 @@ def ppo_run(params):
                               'ipnet_ppo_1_runs_low_horizon',
                               'ppo_bc_train_simple',
                               'seed516',
-                              'ppo_agent',
-                              'saved_model.pb')
+                              'ppo_agent',)
+                              # 'saved_model.pb')
         model = None
+        agent_counter = 0
         
         for bc_agent_dir in bc_agent_dirs:
             # Configure gym env
@@ -432,15 +433,24 @@ def ppo_run(params):
 
 	        # Create model
             with tf.device('/device:GPU:{}'.format(params["GPU_ID"])):
-   	            model = create_model(gym_env, "ppo_agent", **params) 
-            model = load(ppo_model_path)
+   	            model = create_model(gym_env, "ppo_agent", model_load_path=None,**params)
+            load(export_dir=ppo_model_path, sess= tf.get_default_session(), tags=["serve"])
             
 	        # Train model
             params["CURR_SEED"] = seed
             train_info = update_model(gym_env, model, **params)
         
+            bc_agent_name = bc_agent_dir.split(os.sep)[-2:]
+            print("Completed training on: " + bc_agent_name)
+            
+            agent_counter = agent_counter + 1
+            
+            if agent_counter >= 1:
+                break
+        
         # Save model
-        save_ppo_model(model, curr_seed_dir + model.agent_name)
+        ppo_model_path = curr_seed_dir + model.agent_name
+        save_ppo_model(model, ppo_model_path)
         print("Saved training info at", curr_seed_dir + "training_info")
         save_pickle(train_info, curr_seed_dir + "training_info")
         train_infos.append(train_info)

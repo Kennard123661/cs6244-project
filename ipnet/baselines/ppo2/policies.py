@@ -130,7 +130,7 @@ class PolicyWithValue(object):
         tf_util.load_state(load_path, sess=self.sess)
 
 
-def build_policy(env, policy_network, input_seq_length: int,
+def build_policy(env, policy_network, input_seq_length: int,        # policy_network = 'conv_hypernetwork' in utils
                  value_network=None,  normalize_observations=False, estimate_q=False, **policy_kwargs):
     if isinstance(policy_network, str):
         network_type = policy_network
@@ -152,7 +152,7 @@ def build_policy(env, policy_network, input_seq_length: int,
         encoded_x = tf.reshape(encoded_x, shape=[batchsize, sequence_len, h, w, d])
         encoded_x = encode_observation(ob_space, encoded_x)
 
-        with tf.variable_scope('pi', reuse=tf.AUTO_REUSE):
+        with tf.variable_scope('pi', reuse=tf.AUTO_REUSE):  # reuse variables in conv_fn
             policy_latent = policy_network(encoded_x)
             assert not isinstance(policy_latent, tuple)
             # todo: uncomment code for recurrent architectures.

@@ -358,7 +358,7 @@ def get_model_policy(step_fn, sim_threads, is_joint_action=False):
     return state_policy, encoded_state_policy
 
 
-def create_model(env, agent_name, use_pretrained_weights=False, **kwargs):
+def create_model(env, agent_name, use_pretrained_weights=False, model_load_path = None, **kwargs):
     """Creates a model and saves it at a location
 
     env: a dummy environment that is used to determine observation and action spaces
@@ -373,6 +373,7 @@ def create_model(env, agent_name, use_pretrained_weights=False, **kwargs):
         nminibatches=kwargs["MINIBATCHES"],
         noptepochs=kwargs["STEPS_PER_UPDATE"],
         scope=agent_name,
+        load_path = model_load_path,    # path to load PPO policy model from
         network_kwargs=kwargs
     )
     model.agent_name = agent_name
