@@ -445,8 +445,8 @@ def ppo_run(params):
             
             agent_counter = agent_counter + 1
             
-            if agent_counter >= 1:
-                break
+            # if agent_counter >= 1:
+            #     break
         
             # Save model
             ppo_model_path = curr_seed_dir + model.agent_name
