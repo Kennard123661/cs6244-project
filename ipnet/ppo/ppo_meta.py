@@ -9,7 +9,7 @@ from sacred.observers import FileStorageObserver
 from tensorflow.saved_model import simple_save, load
 from human_aware_rl.directory import CHECKPOINT_DIR
 
-IPNET_PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ipnet_ppo_runs' + os.path.sep)
+IPNET_PPO_DATA_DIR = os.path.join(CHECKPOINT_DIR, 'ipnet_ppo_meta_training' + os.path.sep)
 # PPO_DATA_DIR = 'data/ppo_runs/'
 
 ex = Experiment('PPO')
@@ -37,7 +37,7 @@ def my_config():
     ##################
 
     TIMESTAMP_DIR = True
-    EX_NAME = "undefined_name"
+    EX_NAME = "ipnet_ppo_meta_training"
 
     if TIMESTAMP_DIR:
         SAVE_DIR = IPNET_PPO_DATA_DIR + time.strftime('%Y_%m_%d-%H_%M_%S_') + EX_NAME + "/"
@@ -74,8 +74,8 @@ def my_config():
     # SAVE_BEST_THRESH = 0
 
     # Every `VIZ_FREQUENCY` gradient steps, display the first 100 steps of a rollout of the agents
-    # VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
-    VIZ_FREQUENCY = 1 if not LOCAL_TESTING else 10
+    VIZ_FREQUENCY = 50 if not LOCAL_TESTING else 10
+#    VIZ_FREQUENCY = 1 if not LOCAL_TESTING else 10
 
     ##############
     # PPO PARAMS #
