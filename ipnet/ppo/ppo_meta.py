@@ -421,6 +421,7 @@ def ppo_run(params):
         agent_counter = 0
         
         for bc_agent_dir in bc_agent_dirs:
+            print(bc_agent_dir)
             # Configure gym env
             gym_env = get_vectorized_gym_env(
                 env, 'Overcooked-v0', featurize_fn=lambda x: mdp.lossless_state_encoding(x), **params
@@ -441,7 +442,7 @@ def ppo_run(params):
             train_info = update_model(gym_env, model, **params)
         
             bc_agent_name = bc_agent_dir.split(os.sep)[-2:]
-            print("Completed training on: " + bc_agent_name)
+            print("Completed training on: " + bc_agent_name[0] + bc_agent_name[1])
             
             agent_counter = agent_counter + 1
             
