@@ -1,0 +1,1 @@
+python ppo/ppo_meta.py with EX_NAME="ppo_meta_bc_train_simple" layout_name="simple" REW_SHAPING_HORIZON=0 PPO_RUN_TOT_TIMESTEPS=2e5 LR=1e-3 GPU_ID=0 OTHER_AGENT_TYPE="meta_bc_train" SEEDS="[9456]" VF_COEF=0.5 MINIBATCHES=10 LR_ANNEALING=3 SELF_PLAY_HORIZON=None TIMESTAMP_DIR=True

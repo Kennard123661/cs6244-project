@@ -3,7 +3,7 @@ import tensorflow as tf
 from gym.spaces import Discrete, Box, MultiDiscrete
 
 def observation_placeholder(ob_space, batch_size=None, name='Ob'):
-    '''
+    """
     Create placeholder to feed observations into of the size appropriate to the observation space
 
     Parameters:
@@ -19,7 +19,7 @@ def observation_placeholder(ob_space, batch_size=None, name='Ob'):
     -------
 
     tensorflow placeholder tensor
-    '''
+    """
 
     assert isinstance(ob_space, Discrete) or isinstance(ob_space, Box) or isinstance(ob_space, MultiDiscrete), \
         'Can only deal with Discrete and Box observation spaces for now'

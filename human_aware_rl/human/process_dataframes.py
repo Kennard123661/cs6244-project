@@ -14,6 +14,25 @@ from human_aware_rl.human.data_processing_utils import convert_joint_df_trajs_to
 # DATAFRAME TO TRAJECTORIES #
 #############################
 
+def get_worker_trajs_from_data(data_path, train_mdps, ordered_trajs, human_ai_trajs) -> dict:
+    print("Loading data from {}".format(data_path))
+    main_trials = pd.read_pickle(data_path)
+    all_workers = list(main_trials['workerid_num'].unique())
+    out_dict = {}
+    for worker in all_workers:
+        trajs = convert_joint_df_trajs_to_overcooked_single(
+            main_trials,
+            [worker],
+            train_mdps,
+            ordered_pairs=ordered_trajs,
+            human_ai_trajs=human_ai_trajs
+        )
+        if len(trajs["ep_observations"]) == 0:
+            continue
+        out_dict[worker] = trajs
+    return out_dict
+
+
 def get_trajs_from_data(data_path, train_mdps, ordered_trajs, human_ai_trajs):
     """
     Converts and returns trajectories from dataframe at `data_path` to overcooked trajectories.
@@ -30,7 +49,6 @@ def get_trajs_from_data(data_path, train_mdps, ordered_trajs, human_ai_trajs):
         ordered_pairs=ordered_trajs,
         human_ai_trajs=human_ai_trajs
     )
-    
     return trajs
 
 

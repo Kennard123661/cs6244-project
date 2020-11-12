@@ -67,7 +67,6 @@ class PolicyWithValue(object):
         else:
             self.vf = fc(vf_latent, 'vf', 1)
             self.vf = self.vf[:,0]
-        
         self.vf = tf.identity(self.vf, name="value")
 
     def _evaluate(self, variables, observation, **extra_feed):
@@ -96,8 +95,10 @@ class PolicyWithValue(object):
         -------
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
-
-        a, action_probs, v, state, neglogp = self._evaluate([self.action, self.action_probs, self.vf, self.state, self.neglogp], observation, **extra_feed)
+        # print(observation.shape)
+        a, action_probs, v, state, neglogp = self._evaluate([self.action, self.action_probs,
+                                                             self.vf, self.state, self.neglogp],
+                                                            observation, **extra_feed)
         if return_action_probs:
             return action_probs
         if state.size == 0:
@@ -126,6 +127,7 @@ class PolicyWithValue(object):
 
     def load(self, load_path):
         tf_util.load_state(load_path, sess=self.sess)
+
 
 def build_policy(env, policy_network, value_network=None,  normalize_observations=False, estimate_q=False, **policy_kwargs):
     if isinstance(policy_network, str):
@@ -159,9 +161,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
                     policy_latent, recurrent_tensors = policy_network(encoded_x, nenv)
                     extra_tensors.update(recurrent_tensors)
 
-
         _v_net = value_network
-
         if _v_net is None or _v_net == 'shared':
             vf_latent = policy_latent
         else:
